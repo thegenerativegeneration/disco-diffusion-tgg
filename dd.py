@@ -1942,6 +1942,7 @@ def loadModels(folders):
 
 def start_run(pargs=None, folders=None, device=None, is_colab=False):
     import sys
+
     USE_ADABINS = True
     TRANSLATION_SCALE = 1.0 / 200.0
     MAX_ADABINS_AREA = 500000
@@ -2207,6 +2208,7 @@ def detectColab():
 def is_in_notebook():
     import traceback
 
+    return True
     rstk = traceback.extract_stack(limit=1)[0]
     return rstk[0].startswith("<ipython")
 
