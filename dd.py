@@ -1309,6 +1309,7 @@ def do_run(
         #  break
         if is_in_notebook():
             display.clear_output(wait=True)
+        display.clear_output(wait=True)  # temp fix
 
         # Print Frame progress if animation mode is on
         if args.animation_mode != "None":
@@ -1682,6 +1683,7 @@ def do_run(
             # print('')
             if is_in_notebook():
                 display.display(image_display)
+            display.display(image_display)  # temp fix
             gc.collect()
             torch.cuda.empty_cache()
             cur_t = diffusion.num_timesteps - skip_steps - 1
@@ -1755,6 +1757,8 @@ def do_run(
                                 if is_in_notebook():
                                     display.clear_output(wait=True)
                                     display.display(image)
+                                display.clear_output(wait=True)  # temp fix
+                                display.display(image)  # temp fix
                                 if args.console_preview:
                                     output = climage.convert(
                                         f"{args.batchFolder}/progress.png",
