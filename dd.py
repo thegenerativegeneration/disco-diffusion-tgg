@@ -1,4 +1,4 @@
-import os
+import os, sys
 import random
 import gc
 from IPython import display
@@ -25,6 +25,7 @@ import climage
 from types import SimpleNamespace
 from glob import glob
 from pydotted import pydot
+from loguru import logger
 
 from tqdm.notebook import tqdm
 from guided_diffusion.script_util import (
@@ -71,7 +72,7 @@ def get_param(key, fallback=None):
         try:
             return json.loads(os.getenv(key))
         except:
-            print(f'⚠️ Could not parse environment parameter "{key}".  Check your quotation marks and special characters. ⚠️')
+            logger.warning(f'⚠️ Could not parse environment parameter "{key}".  Check your quotation marks and special characters. ⚠️')
             return fallback
     return fallback
 
@@ -82,22 +83,22 @@ def createPath(filepath):
 
 def gitclone(url):
     res = subprocess.run(["git", "clone", url], stdout=subprocess.PIPE).stdout.decode("utf-8")
-    print(res)
+    logger.info(res)
 
 
 def pipi(modulestr):
     res = subprocess.run(["pip", "install", modulestr], stdout=subprocess.PIPE).stdout.decode("utf-8")
-    print(res)
+    logger.info(res)
 
 
 def pipie(modulestr):
     res = subprocess.run(["git", "install", "-e", modulestr], stdout=subprocess.PIPE).stdout.decode("utf-8")
-    print(res)
+    logger.info(res)
 
 
 # def wget(url, outputdir):
 #  res = subprocess.run(['wget', url, '-P', f'{outputdir}'], stdout=subprocess.PIPE).stdout.decode('utf-8')
-#  print(res)
+#  logger.info(res)
 
 # https://gist.github.com/adefossez/0646dbe9ed4005480a2407c62aac8869
 
@@ -454,7 +455,7 @@ def do_3d_step(
         rotation_3d_x = translations.rotation_3d_x_series[frame_num]
         rotation_3d_y = translations.rotation_3d_y_series[frame_num]
         rotation_3d_z = translations.rotation_3d_z_series[frame_num]
-        print(
+        logger.info(
             f"translation_x: {translation_x}",
             f"translation_y: {translation_y}",
             f"translation_z: {translation_z}",
@@ -469,15 +470,15 @@ def do_3d_step(
         -translation_z * TRANSLATION_SCALE,
     ]
     rotate_xyz_degrees = [rotation_3d_x, rotation_3d_y, rotation_3d_z]
-    print("translation:", translate_xyz)
-    print("rotation:", rotate_xyz_degrees)
+    logger.info("translation:", translate_xyz)
+    logger.info("rotation:", rotate_xyz_degrees)
     rotate_xyz = [
         math.radians(rotate_xyz_degrees[0]),
         math.radians(rotate_xyz_degrees[1]),
         math.radians(rotate_xyz_degrees[2]),
     ]
     rot_mat = p3d.euler_angles_to_matrix(torch.tensor(rotate_xyz, device=device), "XYZ").unsqueeze(0)
-    print("rot_mat: " + str(rot_mat))
+    logger.info("rot_mat: " + str(rot_mat))
     next_step_pil = dxf.transform_image_3d(
         img_filepath,
         midas_model,
@@ -701,7 +702,7 @@ def init_midas_depth_model(midas_model_type="dpt_large", optimize=True, model_pa
     resize_mode = None
     normalization = None
 
-    print(f"Initializing MiDaS '{midas_model_type}' depth model...")
+    logger.info(f"Initializing MiDaS '{midas_model_type}' depth model...")
     # load network
     midas_model_path = default_models[midas_model_type]
 
@@ -750,7 +751,7 @@ def init_midas_depth_model(midas_model_type="dpt_large", optimize=True, model_pa
         resize_mode = "upper_bound"
         normalization = NormalizeImage(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     else:
-        print(f"midas_model_type '{midas_model_type}' not implemented")
+        logger.warning(f"midas_model_type '{midas_model_type}' not implemented")
         assert False
 
     midas_transform = T.Compose(
@@ -778,7 +779,7 @@ def init_midas_depth_model(midas_model_type="dpt_large", optimize=True, model_pa
 
     midas_model.to(DEVICE)
 
-    print(f"MiDaS '{midas_model_type}' depth model initialized.")
+    logger.info(f"MiDaS '{midas_model_type}' depth model initialized.")
     return midas_model, midas_transform, net_w, net_h, resize_mode, normalization
 
 
@@ -962,7 +963,7 @@ def processKeyFrameProperties(
     try:
         angle_series = get_inbetweens(parse_key_frames(angle), max_frames=max_frames, interp_spline=interp_spline)
     except RuntimeError as e:
-        print(
+        logger.warning(
             "WARNING: You have selected to use key frames, but you have not "
             "formatted `angle` correctly for key frames.\n"
             "Attempting to interpret `angle` as "
@@ -976,7 +977,7 @@ def processKeyFrameProperties(
     try:
         zoom_series = get_inbetweens(parse_key_frames(zoom), max_frames=max_frames, interp_spline=interp_spline)
     except RuntimeError as e:
-        print(
+        logger.warning(
             "WARNING: You have selected to use key frames, but you have not "
             "formatted `zoom` correctly for key frames.\n"
             "Attempting to interpret `zoom` as "
@@ -994,7 +995,7 @@ def processKeyFrameProperties(
             interp_spline=interp_spline,
         )
     except RuntimeError as e:
-        print(
+        logger.warning(
             "WARNING: You have selected to use key frames, but you have not "
             "formatted `translation_x` correctly for key frames.\n"
             "Attempting to interpret `translation_x` as "
@@ -1016,7 +1017,7 @@ def processKeyFrameProperties(
             interp_spline=interp_spline,
         )
     except RuntimeError as e:
-        print(
+        logger.warning(
             "WARNING: You have selected to use key frames, but you have not "
             "formatted `translation_y` correctly for key frames.\n"
             "Attempting to interpret `translation_y` as "
@@ -1038,7 +1039,7 @@ def processKeyFrameProperties(
             interp_spline=interp_spline,
         )
     except RuntimeError as e:
-        print(
+        logger.warning(
             "WARNING: You have selected to use key frames, but you have not "
             "formatted `translation_z` correctly for key frames.\n"
             "Attempting to interpret `translation_z` as "
@@ -1060,7 +1061,7 @@ def processKeyFrameProperties(
             interp_spline=interp_spline,
         )
     except RuntimeError as e:
-        print(
+        logger.warning(
             "WARNING: You have selected to use key frames, but you have not "
             "formatted `rotation_3d_x` correctly for key frames.\n"
             "Attempting to interpret `rotation_3d_x` as "
@@ -1082,7 +1083,7 @@ def processKeyFrameProperties(
             interp_spline=interp_spline,
         )
     except RuntimeError as e:
-        print(
+        logger.warning(
             "WARNING: You have selected to use key frames, but you have not "
             "formatted `rotation_3d_y` correctly for key frames.\n"
             "Attempting to interpret `rotation_3d_y` as "
@@ -1103,7 +1104,7 @@ def processKeyFrameProperties(
             interp_spline=interp_spline,
         )
     except RuntimeError as e:
-        print(
+        logger.warning(
             "WARNING: You have selected to use key frames, but you have not "
             "formatted `rotation_3d_z` correctly for key frames.\n"
             "Attempting to interpret `rotation_3d_z` as "
@@ -1137,15 +1138,16 @@ def processKeyFrameProperties(
     )
 
 
-def do_run(
-    args=None,
-    device=None,
-    is_colab=False,
-    batchNum=None,
-    start_frame=None,
-):
-    print(f"💻 Starting Run: {args.batch_name}({batchNum}) at frame {start_frame}")
-    print("Prepping models...")
+def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=None, folders=None):
+    logfile = f"{folders.batch_folder}/{args.batch_name}({batchNum}).log"
+    logger.configure(
+        handlers=[
+            # dict(sink=sys.stderr, format="[{time}] {message}"),
+            dict(sink=logfile, enqueue=True, serialize=True),
+        ]
+    )
+    logger.info(f"💻 Starting Run: {args.batch_name}({batchNum}) at frame {start_frame}")
+    logger.info("Prepping models...")
     model_config = model_and_diffusion_defaults()
     # Update Model Settings
     if args.diffusion_model == "512x512_diffusion_uncond_finetune_008100":
@@ -1208,7 +1210,7 @@ def do_run(
     clip_models = []
 
     def clipLoad(model_name):
-        print(f"🤖 Loading model '{model_name}'...")
+        logger.info(f"🤖 Loading model '{model_name}'...")
         model = clip.load(model_name, jit=False)[0].eval().requires_grad_(False).to(device)
         clip_models.append(model)
 
@@ -1232,15 +1234,15 @@ def do_run(
         clipLoad("RN101")
 
     if args.use_secondary_model:
-        print("🤖 Loading secondary model...")
+        logger.info("🤖 Loading secondary model...")
         secondary_model = SecondaryDiffusionImageNet2()
         secondary_model.load_state_dict(torch.load(f"{args.model_path}/secondary_model_imagenet_2.pth", map_location="cpu"))
         secondary_model.eval().requires_grad_(False).to(device)
 
-    print(f"🤖 Loading LPIPS...")
+    logger.info(f"🤖 Loading LPIPS...")
     lpips_model = lpips.LPIPS(net="vgg", verbose=False).to(device)
 
-    print("🌱 Seed used:", args.seed)
+    logger.info("🌱 Seed used:", args.seed)
 
     normalize = T.Normalize(
         mean=[0.48145466, 0.4578275, 0.40821073],
@@ -1293,7 +1295,7 @@ def do_run(
         rotation_3d_y = float(rotation_3d_y)
         rotation_3d_z = float(rotation_3d_z)
 
-    # print(range(args.start_frame, args.max_frames))
+    # logger.info(range(args.start_frame, args.max_frames))
 
     if (args.animation_mode == "3D") and (args.midas_weight > 0.0):
         (
@@ -1332,7 +1334,7 @@ def do_run(
                 zoom = zoom_series[frame_num]
                 translation_x = translation_x_series[frame_num]
                 translation_y = translation_y_series[frame_num]
-                print(
+                logger.info(
                     f"angle: {angle}",
                     f"zoom: {zoom}",
                     f"translation_x: {translation_x}",
@@ -1408,10 +1410,10 @@ def do_run(
                         )
                         old_frame.save("oldFrameScaled.png")
                         if frame_num % int(args.turbo_steps) != 0:
-                            print("turbo skip this frame: skipping clip diffusion steps")
+                            logger.info("turbo skip this frame: skipping clip diffusion steps")
                             filename = f"{args.batch_name}({args.batchNum})_{frame_num:04}.png"
                             blend_factor = ((frame_num % int(args.turbo_steps)) + 1) / int(args.turbo_steps)
-                            print("turbo skip this frame: skipping clip diffusion steps and saving blended frame")
+                            logger.info("turbo skip this frame: skipping clip diffusion steps and saving blended frame")
                             newWarpedImg = cv2.imread("prevFrameScaled.png")  # this is already updated..
                             oldWarpedImg = cv2.imread("oldFrameScaled.png")
                             blendedImage = cv2.addWeighted(
@@ -1428,7 +1430,7 @@ def do_run(
                             # if not a skip frame, will run diffusion and need to blend.
                             oldWarpedImg = cv2.imread("prevFrameScaled.png")
                             cv2.imwrite(f"oldFrameScaled.png", oldWarpedImg)  # swap in for blending later
-                            print("clip/diff this frame - generate clip diff image")
+                            logger.info("clip/diff this frame - generate clip diff image")
 
                 init_image = "prevFrameScaled.png"
                 init_scale = args.frames_scale
@@ -1455,7 +1457,7 @@ def do_run(
         prompts_series = split_prompts(args.prompts_series, max_frames=args.max_frames) if args.prompts_series else None
         if prompts_series is not None and frame_num >= len(prompts_series):
             frame_prompt = prompts_series[-1]
-            # print(f'Text Prompt: {frame_prompt}`')
+            # logger.info(f'Text Prompt: {frame_prompt}`')
         elif args.prompts_series is not None:
             frame_prompt = prompts_series[frame_num]
         else:
@@ -1464,13 +1466,13 @@ def do_run(
         image_prompts_series = (split_prompts(args.image_prompts_series, max_frames=args.max_frames) if args.image_prompts_series else None,)
         if image_prompts_series is not None and frame_num >= len(image_prompts_series):
             image_prompt = image_prompts_series[-1]
-            # print(f'🖼️ Image Prompt: {image_prompt}`')
+            # logger.info(f'🖼️ Image Prompt: {image_prompt}`')
         elif args.image_prompts_series is not None:
             image_prompt = image_prompts_series[frame_num]
         else:
             image_prompt = []
 
-        print(f"Frame {frame_num} 📝 Prompt: {frame_prompt}")
+        logger.info(f"Frame {frame_num} 📝 Prompt: {frame_prompt}")
 
         model_stats = []
         for clip_model in clip_models:
@@ -1660,7 +1662,7 @@ def do_run(
                 if torch.isnan(x_in_grad).any() == False:
                     grad = -torch.autograd.grad(x_in, x, x_in_grad)[0]
                 else:
-                    # print("NaN'd")
+                    # logger.info("NaN'd")
                     x_is_NaN = True
                     grad = torch.zeros_like(x)
             if args.clamp_grad and x_is_NaN == False:
@@ -1680,7 +1682,7 @@ def do_run(
                 batchBar = tqdm(range(args.n_batches), ncols=40, dynamic_ncols=True, desc="Batches", position=0, leave=True)
                 batchBar.n = i
                 batchBar.refresh()
-            # print('')
+            # logger.info('')
             if is_in_notebook():
                 display.display(image_display)
             display.display(image_display)  # temp fix
@@ -1845,7 +1847,7 @@ def createVideo(args):
     # tqdm.write('Generating video...')
     if last_frame == "final_frame":
         last_frame = len(glob(args.batchFolder + f"/{folder}({run})_*.png"))
-        print(f"Total frames: {last_frame}")
+        logger.info(f"Total frames: {last_frame}")
 
     image_path = f"{args.batchFolder}/({run})_%04d.png"
     filepath = f"{args.batchFolder}({run}).mp4"
@@ -1879,10 +1881,10 @@ def createVideo(args):
     process = subprocess.Popen(cmd, cwd=f"{args.batchFolder}", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
     if process.returncode != 0:
-        print(stderr)
+        logger.error(stderr)
         raise RuntimeError(stderr)
     else:
-        print("The video is ready and saved to the images folder")
+        logger.info("The video is ready and saved to the images folder")
 
 
 def setupFolders(is_colab=False, PROJECT_DIR=None, pargs=None):
@@ -1938,10 +1940,10 @@ def loadModels(folders):
         },
     ]:
         if not os.path.exists(f'{m["file"]}'):
-            print(f'🌍 (First time setup): Downloading model from {m["url"]} to {m["file"]}')
+            logger.info(f'🌍 (First time setup): Downloading model from {m["url"]} to {m["file"]}')
             wget.download(m["url"], m["file"])
         else:
-            print(f'✅ Model already downloaded: {m["file"]}')
+            logger.success(f'✅ Model already downloaded: {m["file"]}')
 
 
 def start_run(pargs=None, folders=None, device=None, is_colab=False):
@@ -1956,18 +1958,18 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
     side_x = (pargs.width_height[0] // 64) * 64
     side_y = (pargs.width_height[1] // 64) * 64
     if side_x != pargs.width_height[0] or side_y != pargs.width_height[1]:
-        print(f"Changing output size to {side_x}x{side_y}. Dimensions must by multiples of 64.")
+        logger.warning(f"Changing output size to {side_x}x{side_y}. Dimensions must by multiples of 64.")
 
     if pargs.animation_mode == "Video Input":
         videoFramesFolder = f"videoFrames"
         createPath(videoFramesFolder)
-        print(f"Exporting Video Frames (1 every {pargs.extract_nth_frame})...")
+        logger.info(f"Exporting Video Frames (1 every {pargs.extract_nth_frame})...")
         pargs.max_frames = len(glob(f"{videoFramesFolder}/*.jpg"))
         try:
             for f in pathlib.Path(f"{videoFramesFolder}").glob("*.jpg"):
                 f.unlink()
         except:
-            print("")
+            logger.info("")
         vf = f"select=not(mod(n\,{pargs.extract_nth_frame}))"
         subprocess.run(
             f"ffmpeg -i {pargs.video_init_path} -vf f{vf} -vsync -vfr -q:v 2 -loglevel error -stats {videoFramesFolder}/%04d.jpg".split(" "), stdout=subprocess.PIPE
@@ -1975,7 +1977,7 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
 
     # Insist turbo be used only w 3d anim.
     if pargs.animation_mode != "3D" and (pargs.turbo_mode or pargs.vr_mode):
-        print("⚠️ Turbo/VR modes only available with 3D animations. Disabling... ⚠️")
+        logger.warning("⚠️ Turbo/VR modes only available with 3D animations. Disabling... ⚠️")
         pargs.turbo_mode = False
         pargs.vr_mode = False
 
@@ -1983,7 +1985,7 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
         if pargs.intermediate_saves:
             steps_per_checkpoint = math.floor((pargs.steps - pargs.skip_steps - 1) // (pargs.intermediate_saves + 1))
             steps_per_checkpoint = steps_per_checkpoint if steps_per_checkpoint > 0 else 1
-            print(f"Will save every {steps_per_checkpoint} steps")
+            logger.info(f"Will save every {steps_per_checkpoint} steps")
         else:
             steps_per_checkpoint = pargs.steps + 10
     else:
@@ -2026,7 +2028,7 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
             if pargs.retain_overwritten_frames is True:
                 existing_frames = len(glob(folders.batch_folder + f"/{pargs.batch_name}({batchNum})_*.png"))
                 frames_to_save = existing_frames - start_frame
-                print(f"Moving {frames_to_save} frames to the Retained folder")
+                logger.info(f"Moving {frames_to_save} frames to the Retained folder")
                 move_files(
                     start_frame,
                     existing_frames,
@@ -2047,7 +2049,7 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
     if pargs.set_seed == "random_seed":
         random.seed()
         seed = random.randint(0, 2**32)
-        print(f"🌱 Randomly using seed: {seed}")
+        logger.info(f"🌱 Randomly using seed: {seed}")
     else:
         seed = int(pargs.set_seed)
 
@@ -2150,15 +2152,9 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
     # args = SimpleNamespace(**args)
     args = pydot(args)  # Thx Zippy
     try:
-        do_run(
-            args=args,
-            device=device,
-            is_colab=is_colab,
-            batchNum=batchNum,
-            start_frame=start_frame,
-        )
+        do_run(args=args, device=device, is_colab=is_colab, batchNum=batchNum, start_frame=start_frame, folders=folders)
     except KeyboardInterrupt:
-        print("🛑 Run interrupted by user.")
+        logger.warning("🛑 Run interrupted by user.")
         pass
     finally:
         gc.collect()
@@ -2166,7 +2162,7 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
 
     if pargs.animation_mode != "None":
         if pargs.skip_video_for_run_all == True:
-            print("⚠️ Skipping video creation, uncheck skip_video_for_run_all if you want to run it")
+            logger.warning("⚠️ Skipping video creation, uncheck skip_video_for_run_all if you want to run it")
         else:
             createVideo(args)
 
@@ -2174,27 +2170,27 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
 def systemDetails(pargs):
     if pargs.simple_nvidia_smi_display:
         nvidiasmi_output = subprocess.run(["nvidia-smi", "-L"], stdout=subprocess.PIPE).stdout.decode("utf-8")
-        print(f"🔎 {nvidiasmi_output}")
+        logger.info(f"🔎 {nvidiasmi_output}")
     else:
         nvidiasmi_output = subprocess.run(["nvidia-smi"], stdout=subprocess.PIPE).stdout.decode("utf-8")
-        print(nvidiasmi_output)
+        logger.info(nvidiasmi_output)
         # nvidiasmi_ecc_note = subprocess.run(["nvidia-smi", "-i", "0"], stdout=subprocess.PIPE).stdout.decode("utf-8")
-        # print(nvidiasmi_ecc_note)
+        # logger.info(nvidiasmi_ecc_note)
 
 
 def getDevice(pargs):
     import sys
 
     DEVICE = torch.device(pargs.cuda_device if torch.cuda.is_available() else "cpu")
-    print("✅ Using device:", DEVICE)
+    logger.info("✅ Using device:", DEVICE)
     device = DEVICE  # At least one of the modules expects this name..
     try:
         # Fails if CPU is set
         if torch.cuda.get_device_capability(DEVICE) == (8, 0):  ## A100 fix thanks to Emad
-            print("Disabling CUDNN for A100 gpu", file=sys.stderr)
+            logger.info("Disabling CUDNN for A100 gpu", file=sys.stderr)
             torch.backends.cudnn.enabled = False
     except:
-        print("Are you using a CPU?  Check your PyTorch version if you get errors.")
+        logger.warning("Are you using a CPU?  Check your PyTorch version if you get errors.")
         # torch.backends.cudnn.enabled = False
         pass
     return device
@@ -2218,4 +2214,4 @@ def is_in_notebook():
 
 
 def fix_later():
-    print("Gotta parse Notebook Args")
+    logger.warning("Gotta parse Notebook Args")

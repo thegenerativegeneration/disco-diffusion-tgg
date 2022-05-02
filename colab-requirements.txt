@@ -13,3 +13,4 @@ timm
 loguru
 pyyaml
 wget
+loguru
