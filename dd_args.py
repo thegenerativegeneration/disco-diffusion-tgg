@@ -162,6 +162,8 @@ def arg_configuration_loader(args: Union[pydot, dict] = None) -> pydot:
     # Check whether 'args' is a dict, which would error, since using dot access.
     if type(args) == dict:
         confargs = pydot(args)
+    else:
+        confargs = args  # NB support
 
     confgen = confargs.gen_config
     if confgen == "AUTO":
