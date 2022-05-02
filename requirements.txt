@@ -75,7 +75,7 @@ pyrsistent==0.18.1
 PySocks==1.7.1
 python-dateutil==2.8.2
 pytorch3dlite @ git+https://github.com/entmike/pytorch3d-lite@packagify
-pyttitools-adabins @ git+https://github.com/pytti-tools/AdaBins@packagify
+pyttitools-adabins @ git+https://github.com/pytti-tools/AdaBins
 pytz==2022.1
 PyYAML==6.0
 pyzmq==22.3.0
