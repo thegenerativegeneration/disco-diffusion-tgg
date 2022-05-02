@@ -157,6 +157,8 @@ def arg_configuration_loader(args: Union[pydot, dict] = None) -> pydot:
         confargs = pydot(args)
 
     confgen = confargs.gen_config
+    if confgen == "AUTO":
+        confgen = f"{confargs.batch_name}.yaml"
 
     # Check if user wants to generate a defaults configuration file.
     if confgen != "":
