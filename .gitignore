@@ -3,6 +3,9 @@
 # Ignore any images
 init_images/*
 images_out/*
+configs/*
+!configs/TimeToDisco.yaml
+!configs/README.md
 !images_out/TimeToDisco
 images_out/TimeToDisco/*
 !images_out/README.md

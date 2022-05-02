@@ -133,7 +133,14 @@ def parse():
         "--gen_config",
         help="Generate initial configurations",
         type=str,
-        default="",
+        default="AUTO",
+        required=False,
+    )
+    parser.add_argument(
+        "--gen_config_only",
+        help="Generate initial configurations and exit",
+        type=str2bool,
+        default=False,
         required=False,
     )
     parser.add_argument(
@@ -158,16 +165,19 @@ def arg_configuration_loader(args: Union[pydot, dict] = None) -> pydot:
 
     confgen = confargs.gen_config
     if confgen == "AUTO":
-        confgen = f"{confargs.batch_name}.yaml"
+        confgen = f"configs/{confargs.batch_name}.yaml"
 
     # Check if user wants to generate a defaults configuration file.
     if confgen != "":
         if confgen.endswith(".yml") or confgen.endswith(".yaml"):
+            gco = confargs.gen_config_only
             del confargs.gen_config
             del confargs.config_file
+            del confargs.gen_config_only
             dump(confargs.todict(), open(confgen, "w"))
             logger.info("Configuration saved in " + confgen)
-            exit(0)
+            if gco == True:
+                exit(0)
         else:
             logger.warning("Configuration file output must be a YAML file, ending with .yml or .yaml\n" + "Example: python disco.py --gen_config defaults.yml")
             exit(0)
