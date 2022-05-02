@@ -6,6 +6,8 @@ images_out/*
 !images_out/TimeToDisco
 images_out/TimeToDisco/*
 !images_out/README.md
+prevFrame.png
+prevFrameScaled.png
 
 # Ignore some examples
 examples/local/*
