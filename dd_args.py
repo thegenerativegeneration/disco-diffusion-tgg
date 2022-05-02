@@ -7,9 +7,10 @@ from loguru import logger
 from pydotted import pydot
 import argparse
 import dd
+from deepdiff import DeepHash
 
 
-def parse():
+def parse(a=None):
     parser = argparse.ArgumentParser(description="Disco Diffusion")
     # Dummy args
     parser.add_argument("-f", "--f", help="a dummy argument to fool ipython", default="1")
@@ -150,12 +151,18 @@ def parse():
         default=None,
         required=False,
     )
-    return parser.parse_args()
+    if a == None:
+        return parser.parse_args()
+    else:
+        return parser.parse_args(a)
 
 
 # Thanks, https://github.com/aredden
 def arg_configuration_loader(args: Union[pydot, dict] = None) -> pydot:
     # get args if loader called without cli-arguments.
+    cliargs = args = parse().__dict__
+    defaults = parse([]).__dict__
+
     if args is None:
         args = parse().__dict__
 
@@ -164,25 +171,6 @@ def arg_configuration_loader(args: Union[pydot, dict] = None) -> pydot:
         confargs = pydot(args)
     else:
         confargs = args  # NB support
-
-    confgen = confargs.gen_config
-    if confgen == "AUTO":
-        confgen = f"configs/{confargs.batch_name}.yaml"
-
-    # Check if user wants to generate a defaults configuration file.
-    if confgen != "":
-        if confgen.endswith(".yml") or confgen.endswith(".yaml"):
-            gco = confargs.gen_config_only
-            del confargs.gen_config
-            del confargs.config_file
-            del confargs.gen_config_only
-            dump(confargs.todict(), open(confgen, "w"))
-            logger.info("Configuration saved in " + confgen)
-            if gco == True:
-                exit(0)
-        else:
-            logger.warning("Configuration file output must be a YAML file, ending with .yml or .yaml\n" + "Example: python disco.py --gen_config defaults.yml")
-            exit(0)
 
     # Try loading config from config_file cli-argument if exists.
     if confargs.config_file is not None:
@@ -199,4 +187,39 @@ def arg_configuration_loader(args: Union[pydot, dict] = None) -> pydot:
             )
             exit(0)
         logger.info("Loaded configuration arguments.")
+
+    # Override args that came from CLI
+    for arg in cliargs:
+        if arg not in confargs and arg not in ["f", "ip", "stdin", "control", "hb", "Session.key", "Session.signature_scheme", "shell", "transport", "iopub"]:
+            logger.debug(f"Found CLI argument '{arg}' value '{cliargs[arg]}' not present in config file.  Adding anyway...")
+            confargs[arg] = cliargs[arg]
+
+        c = DeepHash(cliargs[arg])[cliargs[arg]]
+        d = DeepHash(defaults[arg])[defaults[arg]]
+
+        if c != d:
+            logger.info(f"Overriding config file parameter '{arg}' value to '{cliargs[arg]}' found in CLI.")
+            confargs[arg] = cliargs[arg]
+
+    # Check if user wants to generate a defaults configuration file.
+    if confargs.gen_config != "":
+        confgen = confargs.gen_config
+        if confgen == "AUTO":
+            confgen = f"configs/{confargs.batch_name}.yaml"
+
+        if confgen.endswith(".yml") or confgen.endswith(".yaml"):
+            gco = confargs.gen_config_only
+            try:  # b/w compat
+                del confargs.gen_config
+                del confargs.config_file
+                del confargs.gen_config_only
+            except:
+                pass
+            dump(confargs.todict(), open(confgen, "w"))
+            logger.info("Configuration saved in " + confgen)
+            if gco == True:
+                exit(0)
+        else:
+            logger.warning("Configuration file output must be a YAML file, ending with .yml or .yaml\n" + "Example: python disco.py --gen_config defaults.yml")
+            exit(0)
     return confargs
