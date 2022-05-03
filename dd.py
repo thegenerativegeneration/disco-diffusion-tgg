@@ -437,6 +437,14 @@ def range_loss(input):
     return (input - input.clamp(-1, 1)).pow(2).mean([1, 2, 3])
 
 
+# Credit: https://colab.research.google.com/drive/10HUmA5laY1e1q7sYGg19Ys2lFM60M_T5#scrollTo=DefFns
+def symm_loss(im, lpm):
+    h = int(im.shape[3] / 2)
+    h1, h2 = im[:, :, :, :h], im[:, :, :, h:]
+    h2 = TF.hflip(h2)
+    return lpm(h1, h2)
+
+
 def do_3d_step(
     img_filepath,
     frame_num,
@@ -1140,12 +1148,12 @@ def processKeyFrameProperties(
 
 def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=None, folders=None):
     logfile = f"{folders.batch_folder}/{args.batch_name}({batchNum}).log"
-    logger.configure(
-        handlers=[
-            # dict(sink=sys.stderr, format="[{time}] {message}"),
-            dict(sink=logfile, enqueue=True, serialize=True),
-        ]
-    )
+    # logger.configure(
+    #     handlers=[
+    #         # dict(sink=sys.stderr, format="[{time}] {message}"),
+    #         dict(sink=logfile, enqueue=True, serialize=True),
+    #     ]
+    # )
     logger.info(f"💻 Starting Run: {args.batch_name}({batchNum}) at frame {start_frame}")
     logger.info("Prepping models...")
     model_config = model_and_diffusion_defaults()
@@ -1190,6 +1198,9 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                 "use_scale_shift_norm": True,
             }
         )
+    symm_switch = 100.0 * (1.0 - (args.symm_switch / args.steps))
+    if args.symmetry_loss:
+        logger.info(f"Symmetry ends at {100-symm_switch}%")
     timestep_respacing = f"ddim{args.steps}"
     diffusion_steps = (1000 // args.steps) * args.steps if args.steps < 1000 else args.steps
     model_config.update({"timestep_respacing": timestep_respacing, "diffusion_steps": diffusion_steps})
@@ -1655,14 +1666,20 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     range_losses = range_loss(out["pred_xstart"])
                 sat_losses = torch.abs(x_in - x_in.clamp(min=-1, max=1)).mean()
                 loss = tv_losses.sum() * args.tv_scale + range_losses.sum() * args.range_scale + sat_losses.sum() * args.sat_scale
+
                 if init is not None and args.init_scale:
                     init_losses = lpips_model(x_in, init)
                     loss = loss + init_losses.sum() * args.init_scale
+
+                if args.symmetry_loss and np.array(t.cpu())[0] > 10 * symm_switch:
+                    sloss = symm_loss(x_in, lpips_model)
+                    loss = loss + sloss.sum() * args.symmetry_loss_scale
+
                 x_in_grad += torch.autograd.grad(loss, x_in)[0]
                 if torch.isnan(x_in_grad).any() == False:
                     grad = -torch.autograd.grad(x_in, x, x_in_grad)[0]
                 else:
-                    # logger.info("NaN'd")
+                    logger.debug("NaN'd")
                     x_is_NaN = True
                     grad = torch.zeros_like(x)
             if args.clamp_grad and x_is_NaN == False:
@@ -2148,6 +2165,9 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
         "model_path": folders.model_path,
         "batchFolder": folders.batch_folder,
         "resume_run": pargs.resume_run,
+        "symmetry_loss": pargs.symmetry_loss,
+        "symmetry_loss_scale": pargs.symmetry_loss_scale,
+        "symm_switch": pargs.symm_switch,
     }
     # args = SimpleNamespace(**args)
     args = pydot(args)  # Thx Zippy

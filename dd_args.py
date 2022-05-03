@@ -130,6 +130,10 @@ def parse(a=None):
     parser.add_argument("--retain_overwritten_frames", help="Retain Overwritten Frames", type=str2bool, default=gp("retain_overwritten_frames", False), required=False)
     parser.add_argument("--skip_video_for_run_all", help="Skip Video Creation", type=str2bool, default=gp("skip_video_for_run_all", False), required=False)
     parser.add_argument("--check_model_SHA", help="Check Model Hash", type=str2bool, default=gp("check_model_SHA", False), required=False)
+    parser.add_argument("--symmetry_loss", help="Symmetry Loss", type=str2bool, default=gp("symmetry_loss", False), required=False)
+    parser.add_argument("--symmetry_loss_scale", help="Symmetry Loss Scale", type=int, default=gp("symmetry_loss_scale", 1500), required=False)
+    parser.add_argument("--symm_switch", help="Symmetry Switch", type=int, default=gp("symm_switch", 40), required=False)
+
     parser.add_argument(
         "--gen_config",
         help="Generate initial configurations",
