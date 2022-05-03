@@ -1256,7 +1256,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
     logger.info(f"🤖 Loading LPIPS...")
     lpips_model = lpips.LPIPS(net="vgg", verbose=False).to(device)
 
-    logger.info("🌱 Seed used:", args.seed)
+    logger.info("🌱 Seed used:", seed)
 
     normalize = T.Normalize(
         mean=[0.48145466, 0.4578275, 0.40821073],
