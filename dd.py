@@ -1198,9 +1198,9 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                 "use_scale_shift_norm": True,
             }
         )
-    symm_switch = 100.0 * (1.0 - (args.symm_switch / args.steps))
+    symmetry_switch = 100.0 * (1.0 - (args.symmetry_switch / args.steps))
     if args.symmetry_loss:
-        logger.info(f"Symmetry ends at {100-symm_switch}%")
+        logger.info(f"Symmetry ends at {100-symmetry_switch}%")
     timestep_respacing = f"ddim{args.steps}"
     diffusion_steps = (1000 // args.steps) * args.steps if args.steps < 1000 else args.steps
     model_config.update({"timestep_respacing": timestep_respacing, "diffusion_steps": diffusion_steps})
@@ -1671,7 +1671,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     init_losses = lpips_model(x_in, init)
                     loss = loss + init_losses.sum() * args.init_scale
 
-                if args.symmetry_loss and np.array(t.cpu())[0] > 10 * symm_switch:
+                if args.symmetry_loss and np.array(t.cpu())[0] > 10 * symmetry_switch:
                     sloss = symm_loss(x_in, lpips_model)
                     loss = loss + sloss.sum() * args.symmetry_loss_scale
 
@@ -2167,7 +2167,7 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
         "resume_run": pargs.resume_run,
         "symmetry_loss": pargs.symmetry_loss,
         "symmetry_loss_scale": pargs.symmetry_loss_scale,
-        "symm_switch": pargs.symm_switch,
+        "symmetry_switch": pargs.symmetry_switch,
     }
     # args = SimpleNamespace(**args)
     args = pydot(args)  # Thx Zippy
