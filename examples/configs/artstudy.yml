@@ -1,0 +1,17 @@
+batch_name: art_study1
+n_batches: 1
+steps: 100
+set_seed: 123
+text_prompts:
+  0:
+  - sand castles with lawn gnomes guarding the front gate, trending on artstation, childs drawing
+width_height:
+- 1280
+- 768
+modifiers:
+  0:
+    clip_guidance_scale: 500
+  1:
+    clip_guidance_scale: 1000
+  2:
+    clip_guidance_scale: 1500

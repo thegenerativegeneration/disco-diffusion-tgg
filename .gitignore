@@ -16,6 +16,8 @@ prevFrameScaled.png
 examples/local/*
 examples/configs/*
 !examples/configs/lighthouse.yml
+!examples/configs/artstudy.yml
+!examples/configs/artstudy2.yml
 !examples/local/README.md
 !examples/linux
 !examples/windows

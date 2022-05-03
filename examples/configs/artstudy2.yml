@@ -1,0 +1,23 @@
+batch_name: art_study2
+n_batches: 1
+steps: 100
+set_seed: 123
+text_prompts:
+  0:
+  - sand castles with lawn gnomes guarding the front gate, trending on artstation, childs drawing
+width_height:
+- 1280
+- 768
+modifiers:
+  0:
+    text_prompts: 
+      0:
+      - sand castles with lawn gnomes guarding the front gate, trending on artstation, art by norman rockwell
+  1:
+    text_prompts:
+      0:
+      - sand castles with lawn gnomes guarding the front gate, trending on artstation, art by beksinski
+  2:
+    text_prompts: 
+      0:
+      - sand castles with lawn gnomes guarding the front gate, trending on artstation, art by aaron miller

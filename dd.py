@@ -26,6 +26,7 @@ from types import SimpleNamespace
 from glob import glob
 from pydotted import pydot
 from loguru import logger
+from deepdiff import DeepHash
 
 from tqdm.notebook import tqdm
 from guided_diffusion.script_util import (
@@ -1218,9 +1219,6 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
 
     gc.collect()
     torch.cuda.empty_cache()
-    seed = args.seed
-    # for param in args:
-    #    locals()[param] = args[param]
     clip_models = []
 
     def clipLoad(model_name):
@@ -1256,7 +1254,8 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
     logger.info(f"🤖 Loading LPIPS...")
     lpips_model = lpips.LPIPS(net="vgg", verbose=False).to(device)
 
-    logger.info("🌱 Seed used:", seed)
+    seed = args.seed
+    logger.info("🌱 Seed used:", args.seed)
 
     normalize = T.Normalize(
         mean=[0.48145466, 0.4578275, 0.40821073],
@@ -1969,6 +1968,24 @@ def loadModels(folders):
 def start_run(pargs=None, folders=None, device=None, is_colab=False):
     import sys
 
+    orig_args = pargs.copy()
+    c = DeepHash(pargs.modifiers)[pargs.modifiers]
+    d = DeepHash({})[{}]
+    if c == d:
+        logger.info("No modifiers found.")
+        processBatch(pargs=pargs, folders=folders, device=device, is_colab=is_colab)
+    else:
+        logger.info("Modifiers found.  Running modifications in batches...")
+        for mod in pargs.modifiers:
+            pargs = pydot(orig_args)
+            modifier = pargs.modifiers[mod]
+            for param in modifier:
+                logger.info(f"Modifying '{param}' to modifier value {modifier[param]}")
+                pargs[param] = modifier[param]
+                processBatch(pargs=pargs, folders=folders, device=device, is_colab=is_colab)
+
+
+def processBatch(pargs=None, folders=None, device=None, is_colab=False):
     USE_ADABINS = True
     TRANSLATION_SCALE = 1.0 / 200.0
     MAX_ADABINS_AREA = 500000
@@ -2072,6 +2089,7 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
         logger.info(f"🌱 Randomly using seed: {seed}")
     else:
         seed = int(pargs.set_seed)
+        logger.info(f"🌱 Using starting seed: {seed}")
 
     args = {
         "use_checkpoint": pargs.use_checkpoint,
@@ -2171,6 +2189,7 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
         "symmetry_loss": pargs.symmetry_loss,
         "symmetry_loss_scale": pargs.symmetry_loss_scale,
         "symmetry_switch": pargs.symmetry_switch,
+        "modifiers": pargs.modifiers,
     }
     # args = SimpleNamespace(**args)
     args = pydot(args)  # Thx Zippy
