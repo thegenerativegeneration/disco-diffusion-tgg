@@ -164,7 +164,7 @@ def parse(a=None):
 # Thanks, https://github.com/aredden
 def arg_configuration_loader(args: Union[pydot, dict] = None) -> pydot:
     # get args if loader called without cli-arguments.
-    cliargs = args = parse().__dict__
+    cliargs = parse().__dict__
     defaults = parse([]).__dict__
 
     if args is None:

@@ -1148,12 +1148,15 @@ def processKeyFrameProperties(
 
 def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=None, folders=None):
     logfile = f"{folders.batch_folder}/{args.batch_name}({batchNum}).log"
-    # logger.configure(
-    #     handlers=[
-    #         # dict(sink=sys.stderr, format="[{time}] {message}"),
-    #         dict(sink=logfile, enqueue=True, serialize=True),
-    #     ]
-    # )
+    logger.configure(
+        handlers=[
+            dict(sink=sys.stdout),
+            dict(
+                sink=logfile
+                # , enqueue=True, serialize=True
+            ),
+        ]
+    )
     logger.info(f"💻 Starting Run: {args.batch_name}({batchNum}) at frame {start_frame}")
     logger.info("Prepping models...")
     model_config = model_and_diffusion_defaults()
