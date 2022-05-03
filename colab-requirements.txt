@@ -14,3 +14,4 @@ loguru
 pyyaml
 wget
 loguru
+deepdiff
