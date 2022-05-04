@@ -1965,24 +1965,47 @@ def loadModels(folders):
             logger.success(f'✅ Model already downloaded: {m["file"]}')
 
 
+def processModifiers(mods=[], args=None):
+    # Deep copy
+    pargs = pydot(json.loads(json.dumps(args)))
+    # print(json.dumps(pargs))
+    c = DeepHash(pargs.modifiers)[pargs.modifiers]
+    d = DeepHash({})[{}]
+    # return mods
+    if c == d:
+        # logger.info("No modifiers found.")
+        mods.append(pydot(json.loads(json.dumps(args))))
+    else:
+        # logger.info(f"Modifiers found:\n\n{pargs.modifiers}\n\n")
+        for mod in pargs.modifiers:
+            newargs = pydot(json.loads(json.dumps(args)))
+            # logger.info(f"Modifier Param found:\n\n{mod}\n{newargs.modifiers[mod]}\n")
+            # print(mod)
+            # print(pargs.modifiers)
+            modifier = pargs.modifiers[mod]
+            mod_found = False
+            for param in modifier:
+                if param == "modifiers":
+                    mod_found = True
+                # Deep Copy modifier parameter value to pargs
+                newargs[param] = json.loads(json.dumps(modifier[param]))
+
+            if mod_found == False:
+                newargs.modifiers = {}
+
+            mods = processModifiers(mods=mods, args=newargs)
+    return mods
+
+
 def start_run(pargs=None, folders=None, device=None, is_colab=False):
     import sys
 
     orig_args = pargs.copy()
-    c = DeepHash(pargs.modifiers)[pargs.modifiers]
-    d = DeepHash({})[{}]
-    if c == d:
-        logger.info("No modifiers found.")
-        processBatch(pargs=pargs, folders=folders, device=device, is_colab=is_colab)
-    else:
-        logger.info("Modifiers found.  Running modifications in batches...")
-        for mod in pargs.modifiers:
-            pargs = pydot(orig_args)
-            modifier = pargs.modifiers[mod]
-            for param in modifier:
-                logger.info(f"Modifying '{param}' to modifier value {modifier[param]}")
-                pargs[param] = modifier[param]
-                processBatch(pargs=pargs, folders=folders, device=device, is_colab=is_colab)
+    jobs = processModifiers(args=pargs)
+    logger.info(f"{len(jobs)} permutations found.")
+    for j, job in enumerate(jobs):
+        logger.info(f"Processing job {j+1} of {len(jobs)}...")
+        processBatch(pargs=job, folders=folders, device=device, is_colab=is_colab)
 
 
 def processBatch(pargs=None, folders=None, device=None, is_colab=False):
