@@ -20,6 +20,7 @@ from torch.nn import functional as F
 import math
 import cv2
 from PIL import Image, ImageOps
+from PIL.PngImagePlugin import PngInfo
 from datetime import datetime
 import climage
 from types import SimpleNamespace
@@ -1799,6 +1800,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                                     else:
                                         image.save(f"{args.batchFolder}/{filename}")
                             if cur_t == -1:
+                                logger.info("Image render completed.")
                                 if frame_num == 0:
                                     save_settings(
                                         args,
@@ -1808,7 +1810,16 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                                     )
                                 if args.animation_mode != "None":
                                     image.save("prevFrame.png")
-                                image.save(f"{args.batchFolder}/{filename}")
+                                image_name = f"{args.batchFolder}/{filename}"
+                                if args.save_metadata == True:
+                                    logger.info("Tagging PNG with metadata.")
+                                    metadata = PngInfo()
+                                    metadata.add_text("dd_args", json.dumps(args))
+                                    image.save(image_name, pnginfo=metadata)
+                                else:
+                                    image.save(image_name)
+
+                                logger.success(f"Image saved to '{image_name}'")
                                 if args.animation_mode == "3D":
                                     # If turbo, save a blended image
                                     if args.turbo_mode and frame_num > 0:
@@ -1915,9 +1926,9 @@ def setupFolders(is_colab=False, PROJECT_DIR=None, pargs=None):
     folders = pydot(
         {
             "root_path": os.getcwd(),
-            "batch_folder": f"{PROJECT_DIR}/images_out/{batch_name}",
-            "initDirPath": f"{PROJECT_DIR}/init_images",
-            "outDirPath": f"{PROJECT_DIR}/images_out",
+            "batch_folder": f"{PROJECT_DIR}/{pargs.images_out}/{batch_name}" if pargs.images_out[0] != "/" else f"{pargs.images_out}/{batch_name}",
+            "initDirPath": f"{PROJECT_DIR}/{pargs.init_images}" if pargs.init_images[0] != "/" else pargs.init_images,
+            "outDirPath": f"{PROJECT_DIR}/{pargs.images_out}" if pargs.images_out[0] != "/" else pargs.images_out,
             "model_path": f"{PROJECT_DIR}/models",
             "pretrain_path": f"{PROJECT_DIR}/pretrained",
         }
@@ -2238,6 +2249,7 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False):
         "symmetry_loss_scale": pargs.symmetry_loss_scale,
         "symmetry_switch": pargs.symmetry_switch,
         "modifiers": pargs.modifiers,
+        "save_metadata": pargs.save_metadata,
     }
     # args = SimpleNamespace(**args)
     args = pydot(args)  # Thx Zippy

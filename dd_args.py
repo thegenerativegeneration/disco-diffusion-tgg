@@ -26,6 +26,9 @@ def parse(a=None):
     # Real Args
     parser.add_argument("--steps", type=int, help="Number of steps", required=False, default=gp("steps", 250))
     parser.add_argument("--batch_name", help="Batch Name", required=False, default=gp("batch_name", "TimeToDisco"))
+    parser.add_argument("--images_out", help="Images out directory", required=False, default=gp("batch_name", "images_out"))
+    parser.add_argument("--init_images", help="Init Images directory", required=False, default=gp("batch_name", "init_images"))
+    parser.add_argument("--save_metadata", help="Save DD params to image", type=str2bool, default=gp("save_metadata", False))
     parser.add_argument(
         "--text_prompts",
         help="Text Prompts",
