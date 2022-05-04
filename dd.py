@@ -1939,28 +1939,53 @@ def loadModels(folders):
     for m in [
         {
             "file": f"{folders.model_path}/dpt_large-midas-2f21e586.pt",
-            "url": "https://github.com/intel-isl/DPT/releases/download/1_0/dpt_large-midas-2f21e586.pt",
+            "sources": [
+                {"url": "https://github.com/intel-isl/DPT/releases/download/1_0/dpt_large-midas-2f21e586.pt"},
+                {"url": "https://ipfs.io/ipfs/QmbpkBqVrayBzaxHMSnk917ng2EopZsdFK8pFkku9sbr8H?filename=dpt_large-midas-2f21e586.pt"},
+            ],
         },
         {
             "file": f"{folders.model_path}/512x512_diffusion_uncond_finetune_008100.pt",
-            "url": "https://v-diffusion.s3.us-west-2.amazonaws.com/512x512_diffusion_uncond_finetune_008100.pt",
+            "sources": [
+                {"url": "https://v-diffusion.s3.us-west-2.amazonaws.com/512x512_diffusion_uncond_finetune_008100.pt"},
+                {"url": "https://huggingface.co/lowlevelware/512x512_diffusion_unconditional_ImageNet/resolve/main/512x512_diffusion_uncond_finetune_008100.pt"},
+                {"url": "https://ipfs.io/ipfs/QmYNhbgnjPRuprob6WiELb3egd8rZa2xTEYGzAfkLuaKJw?filename=512x512_diffusion_uncond_finetune_008100.pt"},
+            ],
         },
         {
             "file": f"{folders.model_path}/256x256_diffusion_uncond.pt",
-            "url": "https://openaipublic.blob.core.windows.net/diffusion/jul-2021/256x256_diffusion_uncond.pt",
+            "sources": [
+                {"url": "https://openaipublic.blob.core.windows.net/diffusion/jul-2021/256x256_diffusion_uncond.pt"},
+                {"url": "https://www.dropbox.com/s/9tqnqo930mpnpcn/256x256_diffusion_uncond.pt"},
+                {"url": "https://ipfs.io/ipfs/QmRkZ4JBLHwpZqeAuULYeGzo3TZqfgnrg6bFvUXFneotP9?filename=256x256_diffusion_uncond.pt"},
+            ],
         },
         {
             "file": f"{folders.model_path}/secondary_model_imagenet_2.pth",
-            "url": "https://v-diffusion.s3.us-west-2.amazonaws.com/secondary_model_imagenet_2.pth",
+            "sources": [
+                {"url": "https://v-diffusion.s3.us-west-2.amazonaws.com/secondary_model_imagenet_2.pth"},
+                {"url": "https://ipfs.io/ipfs/QmX1VDNBAsAbupaLLkL2AxTQsxbFFYac8rqM9croNm3H9U?filename=secondary_model_imagenet_2.pth"},
+            ],
         },
         {
             "file": f"{folders.pretrain_path}/AdaBins_nyu.pt",
-            "url": "https://cloudflare-ipfs.com/ipfs/Qmd2mMnDLWePKmgfS8m6ntAg4nhV5VkUyAydYBp8cWWeB7/AdaBins_nyu.pt",
+            "sources": [
+                {"url": "https://cloudflare-ipfs.com/ipfs/Qmd2mMnDLWePKmgfS8m6ntAg4nhV5VkUyAydYBp8cWWeB7/AdaBins_nyu.pt"},
+                {"url": "https://ipfs.io/ipfs/QmfZv38n2u3b3gZMtTqSwEXDEM27BtQdksefCYy7HA9VAv?filename=AdaBins_nyu.pt"},
+            ],
         },
     ]:
         if not os.path.exists(f'{m["file"]}'):
-            logger.info(f'🌍 (First time setup): Downloading model from {m["url"]} to {m["file"]}')
-            wget.download(m["url"], m["file"])
+            downloaded = False
+            for source in m["sources"]:
+                if not downloaded:
+                    url = source["url"]
+                    try:
+                        logger.info(f'🌍 (First time setup): Downloading model from {url} to {m["file"]}')
+                        wget.download(url, m["file"])
+                        downloaded = True
+                    except:
+                        logger.error(f"Download failed.  Fallback URLs will be attempted until exhausted.")
         else:
             logger.success(f'✅ Model already downloaded: {m["file"]}')
 
