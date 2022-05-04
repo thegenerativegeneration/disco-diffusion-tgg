@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from functools import partial
 from torch import nn
 from torch.nn import functional as F
+import itertools
 import math
 import cv2
 from PIL import Image, ImageOps
@@ -2001,46 +2002,79 @@ def loadModels(folders):
             logger.success(f'✅ Model already downloaded: {m["file"]}')
 
 
-def processModifiers(mods=[], args=None):
-    # Deep copy
+def processMultipliers(args=None):
+    multargs = []
     pargs = pydot(json.loads(json.dumps(args)))
-    # print(json.dumps(pargs))
-    c = DeepHash(pargs.modifiers)[pargs.modifiers]
+    c = DeepHash(pargs.multipliers)[pargs.multipliers]
     d = DeepHash({})[{}]
-    # return mods
     if c == d:
-        # logger.info("No modifiers found.")
-        mods.append(pydot(json.loads(json.dumps(args))))
+        # logger.info("No multipliers found.")
+        multargs.append(pydot(json.loads(json.dumps(args))))
     else:
-        # logger.info(f"Modifiers found:\n\n{pargs.modifiers}\n\n")
-        for mod in pargs.modifiers:
+        combinations = []
+        params = []
+        for param in pargs.multipliers:
+            multiplier = pargs.multipliers[param]
+            params.append(param)
+            combinations.append(multiplier)
+
+        list = [i for i in itertools.product(*combinations)]
+        # logger.info(f"Flight Sheet ({len(list)} entries):\n{json.dumps(list, indent=4, sort_keys=True)}")
+        for row in list:
             newargs = pydot(json.loads(json.dumps(args)))
-            # logger.info(f"Modifier Param found:\n\n{mod}\n{newargs.modifiers[mod]}\n")
-            # print(mod)
-            # print(pargs.modifiers)
-            modifier = pargs.modifiers[mod]
-            mod_found = False
-            for param in modifier:
-                if param == "modifiers":
-                    mod_found = True
-                # Deep Copy modifier parameter value to pargs
-                newargs[param] = json.loads(json.dumps(modifier[param]))
+            for col in range(len(row)):
+                if params[col] != "multipliers":
+                    newargs[params[col]] = row[col]
 
-            if mod_found == False:
-                newargs.modifiers = {}
+            newargs.multipliers = {}
+            multargs.append(newargs)
+    return multargs
 
-            mods = processModifiers(mods=mods, args=newargs)
+
+def processModifiers(mods=[], args=[]):
+    for p in range(len(args)):
+        # Deep copy
+        pargs = pydot(json.loads(json.dumps(args[p])))
+        c = DeepHash(pargs.modifiers)[pargs.modifiers]
+        d = DeepHash({})[{}]
+        # return mods
+        if c == d or pargs.modifiers == None:
+            # logger.info("No modifiers found.")
+            mods.append(pydot(json.loads(json.dumps(pargs))))
+        else:
+            # logger.info(f"Modifiers found:\n\n{pargs.modifiers}\n\n")
+            for mod in pargs.modifiers:
+                newargs = pydot(json.loads(json.dumps(pargs)))
+                modifier = pargs.modifiers[mod]
+
+                mod_found = False
+                mult_found = False
+                for param in modifier:
+                    if param == "modifiers":
+                        mod_found = True
+                    if param == "multipliers":
+                        mult_found = True
+                    # Deep Copy modifier parameter value to pargs
+                    newargs[param] = json.loads(json.dumps(modifier[param]))
+
+                if mod_found == False:
+                    newargs.modifiers = {}
+                if mult_found == False:
+                    newargs.multipliers = {}
+
+            multargs = processMultipliers(args=newargs)
+            mods = processModifiers(mods=mods, args=multargs)
     return mods
 
 
 def start_run(pargs=None, folders=None, device=None, is_colab=False):
-    import sys
-
-    orig_args = pargs.copy()
-    jobs = processModifiers(args=pargs)
-    logger.info(f"{len(jobs)} permutations found.")
+    multargs = processMultipliers(args=pargs)
+    jobs = processModifiers(multargs)
+    logger.info(f"💼 {len(jobs)} jobs found.")
+    with open(f"{folders.batch_folder}/flightsheet.json", "w") as outfile:
+        outfile.write(json.dumps(jobs))
     for j, job in enumerate(jobs):
-        logger.info(f"Processing job {j+1} of {len(jobs)}...")
+        logger.info(f"💼 Processing job {j+1} of {len(jobs)}...")
         processBatch(pargs=job, folders=folders, device=device, is_colab=is_colab)
 
 

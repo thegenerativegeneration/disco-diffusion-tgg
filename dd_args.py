@@ -52,6 +52,13 @@ def parse(a=None):
         default=gp("modifiers", {}),
         required=False,
     )
+    parser.add_argument(
+        "--multipliers",
+        help="Multipliers",
+        type=str2json,
+        default=gp("multipliers", {}),
+        required=False,
+    )
     parser.add_argument("--image_prompts", help="Text Prompts", type=str2json, default=gp("image_prompts", {}), required=False)
     parser.add_argument("--cutout_debug", nargs="?", type=str2bool, const=True, default=gp("cutout_design", False), help="Cutout Debugger", required=False)
     parser.add_argument("--console_preview", nargs="?", type=str2bool, const=True, default=gp("console_preview", False), help="Console Preview", required=False)
