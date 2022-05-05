@@ -15,4 +15,3 @@ pyyaml
 wget
 loguru
 deepdiff
-sqlite3
