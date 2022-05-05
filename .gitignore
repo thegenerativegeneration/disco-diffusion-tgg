@@ -11,6 +11,7 @@ images_out/TimeToDisco/*
 !images_out/README.md
 prevFrame.png
 prevFrameScaled.png
+disco.db
 
 # Ignore some examples
 examples/local/*

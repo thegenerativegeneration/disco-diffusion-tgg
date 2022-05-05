@@ -1,6 +1,9 @@
 import os, sys
 import random
 import gc
+from tkinter import N
+import uuid
+import time
 from IPython import display
 from ipywidgets import Output
 import lpips
@@ -1821,6 +1824,15 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                                     image.save(image_name)
 
                                 logger.success(f"Image saved to '{image_name}'")
+                                if (getDB(args.db)) != None:
+                                    dbcon = getDB(args.db)
+                                    sql = """
+                                       INSERT INTO images (job_uuid, timestamp, image_path, image)
+                                       VALUES (?, ?, ?, ?)
+                                    """
+                                    dbcon.execute(sql, (args.uuid, time.time(), image_name, convertToBinaryData(image_name)))
+                                    dbcon.commit()
+
                                 if args.animation_mode == "3D":
                                     # If turbo, save a blended image
                                     if args.turbo_mode and frame_num > 0:
@@ -2067,18 +2079,90 @@ def processModifiers(mods=[], args=[]):
     return mods
 
 
+def convertToBinaryData(filename):
+    # Convert digital data to binary format
+    with open(filename, "rb") as file:
+        blobData = file.read()
+    return blobData
+
+
+def getDB(db=None):
+    if db == None:
+        logger.warning("No DB name found.  Returning nothing.")
+    else:
+        logger.info(f"Returning Database: {db}")
+        import sqlite3
+
+        con = sqlite3.connect(db)
+        return con
+
+
+def prepareDB(db=None):
+    if db == None:
+        logger.warning("No database specified.")
+    else:
+        logger.info(f"Preparing Database: {db}")
+        import sqlite3
+
+        con = sqlite3.connect(db)
+        con.execute(
+            """
+            CREATE TABLE IF NOT EXISTS jobs (
+            uuid            TEXT        PRIMARY KEY,
+            timestamp       timestamp   not null,
+            parameters      TEXT        not null,
+            session_uuid    TEXT
+            )
+        """
+        )
+
+        con.execute(
+            """
+            CREATE TABLE IF NOT EXISTS images (
+            job_uuid        TEXT        not null,
+            timestamp       timestamp   not null,
+            image           BLOB        not null,
+            image_path      TEXT
+            )
+        """
+        )
+        return con
+    return None
+
+
+def dbexec(dbcon=None, sql=None):
+    if dbcon != None:
+        dbcon.execute(sql)
+        dbcon.commit()
+
+
 def start_run(pargs=None, folders=None, device=None, is_colab=False):
     multargs = processMultipliers(args=pargs)
     jobs = processModifiers(multargs)
     logger.info(f"💼 {len(jobs)} jobs found.")
     with open(f"{folders.batch_folder}/flightsheet.json", "w") as outfile:
         outfile.write(json.dumps(jobs))
+
+    dbcon = prepareDB(pargs.db)
+    cur = dbcon.cursor()
+    # Generate unique session UUID for DB
+    session_id = str(uuid.uuid4())
+    logger.info(f"⚒️ Session {session_id} started...")
+    # Cycle through jobs
     for j, job in enumerate(jobs):
         logger.info(f"💼 Processing job {j+1} of {len(jobs)}...")
-        processBatch(pargs=job, folders=folders, device=device, is_colab=is_colab)
+        id = str(uuid.uuid4())
+        job.uuid = id
+        dbexec(
+            dbcon=dbcon,
+            sql=f"""
+            INSERT INTO jobs (uuid, timestamp, parameters, session_uuid)
+            VALUES ('{job.uuid}',{time.time()},'{json.dumps(job)}','{session_id}');""",
+        )
+        processBatch(pargs=job, folders=folders, device=device, is_colab=is_colab, session_id=session_id)
 
 
-def processBatch(pargs=None, folders=None, device=None, is_colab=False):
+def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_id="N/A"):
     USE_ADABINS = True
     TRANSLATION_SCALE = 1.0 / 200.0
     MAX_ADABINS_AREA = 500000
@@ -2284,6 +2368,9 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False):
         "symmetry_switch": pargs.symmetry_switch,
         "modifiers": pargs.modifiers,
         "save_metadata": pargs.save_metadata,
+        "db": pargs.db,
+        "uuid": pargs.uuid,
+        "session_uuid": session_id,
     }
     # args = SimpleNamespace(**args)
     args = pydot(args)  # Thx Zippy

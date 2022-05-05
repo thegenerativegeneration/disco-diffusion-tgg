@@ -24,6 +24,7 @@ def parse(a=None):
     parser.add_argument("-t", "--transport", help="a dummy argument to fool ipython", default="1")
     parser.add_argument("-o", "--iopub", help="a dummy argument to fool ipython", default="1")
     # Real Args
+    parser.add_argument("--db", help="SQLite DB path", required=False, default=gp("db", None))
     parser.add_argument("--steps", type=int, help="Number of steps", required=False, default=gp("steps", 250))
     parser.add_argument("--batch_name", help="Batch Name", required=False, default=gp("batch_name", "TimeToDisco"))
     parser.add_argument("--images_out", help="Images out directory", required=False, default=gp("batch_name", "images_out"))
