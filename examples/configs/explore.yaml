@@ -1,0 +1,23 @@
+# These settings are base settings for this job set.  All other settings are the
+# "Notebook defaults" that a typically set.
+batch_name: explore
+set_seed: 54321
+n_batches: 1
+steps: 150
+# Multipliers create a Cartesian Product of all combinations to create a set of
+# jobs
+multipliers:
+  text_prompts:
+  - 0:
+        - extremely immaculate matte painting of an exquisite castle of grandeur constructed atop a cliff face and overlooking the vast seascape, Gothic architecture and Royalcore aesthetic, illustrated by Hope Hoover
+  - 0:
+        - A Low angle of Hong Kong Apartments, Architecture of Density, Michael Wolf, Zdzisław Beksiński, 8k Gigapixel, High Resolution, red color scheme.
+  clip_guidance_scale:
+  - 500
+  - 1000
+  - 1500
+  - 2000
+  cut_ic_pow:
+  - 1
+  - 5
+  - 10

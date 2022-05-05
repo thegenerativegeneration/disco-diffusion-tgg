@@ -18,6 +18,7 @@ examples/configs/*
 !examples/configs/lighthouse.yml
 !examples/configs/artstudy.yml
 !examples/configs/artstudy2.yml
+!examples/configs/explore.yaml
 !examples/local/README.md
 !examples/linux
 !examples/windows
