@@ -1830,8 +1830,9 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                                        INSERT INTO images (job_uuid, timestamp, image_path, image)
                                        VALUES (?, ?, ?, ?)
                                     """
-                                    dbcon.execute(sql, (args.uuid, time.time(), image_name, convertToBinaryData(image_name)))
-                                    dbcon.commit()
+                                    if dbcon != None:
+                                        dbcon.execute(sql, (args.uuid, time.time(), image_name, convertToBinaryData(image_name)))
+                                        dbcon.commit()
 
                                 if args.animation_mode == "3D":
                                     # If turbo, save a blended image
@@ -2144,7 +2145,6 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
         outfile.write(json.dumps(jobs))
 
     dbcon = prepareDB(pargs.db)
-    cur = dbcon.cursor()
     # Generate unique session UUID for DB
     session_id = str(uuid.uuid4())
     logger.info(f"⚒️ Session {session_id} started...")
