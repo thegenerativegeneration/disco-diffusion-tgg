@@ -32,7 +32,7 @@ from glob import glob
 from pydotted import pydot
 from loguru import logger
 from deepdiff import DeepHash
-
+import sqlite3
 from tqdm.notebook import tqdm
 from guided_diffusion.script_util import (
     create_model_and_diffusion,
@@ -1824,15 +1824,14 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                                     image.save(image_name)
 
                                 logger.success(f"Image saved to '{image_name}'")
-                                if (getDB(args.db)) != None:
-                                    dbcon = getDB(args.db)
+                                dbcon = getDB(args.db)
+                                if (dbcon) != None:
                                     sql = """
                                        INSERT INTO images (job_uuid, timestamp, image_path, image)
                                        VALUES (?, ?, ?, ?)
                                     """
-                                    if dbcon != None:
-                                        dbcon.execute(sql, (args.uuid, time.time(), image_name, convertToBinaryData(image_name)))
-                                        dbcon.commit()
+                                    dbcon.execute(sql, (args.uuid, time.time(), image_name, convertToBinaryData(image_name)))
+                                    dbcon.commit()
 
                                 if args.animation_mode == "3D":
                                     # If turbo, save a blended image
@@ -2091,9 +2090,7 @@ def getDB(db=None):
     if db == None:
         logger.warning("No DB name found.  Returning nothing.")
     else:
-        logger.info(f"Returning Database: {db}")
-        import sqlite3
-
+        # logger.info(f"Returning Database: {db}")
         con = sqlite3.connect(db)
         return con
 
@@ -2133,6 +2130,7 @@ def prepareDB(db=None):
 
 def dbexec(dbcon=None, sql=None):
     if dbcon != None:
+        logger.debug(sql)
         dbcon.execute(sql)
         dbcon.commit()
 
