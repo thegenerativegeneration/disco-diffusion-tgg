@@ -8,7 +8,7 @@ A frankensteinian amalgamation of notebooks, models and techniques for the gener
 
 ## Changes in this Fork
 
-- Focus on running from Windows or Linux CLI instead of keeping Notebook parity in the short term
+- Focus on running from Windows, Linux, Google Colab, and Docker via either CLI or Notebook.
 - Move all functions possible out of the main `disco.py` module into `dd.py` so that `disco.py` can become readable.  (Ongoing work in progress here)
 - Instead changing parameters directly in `disco.py`, parameters can be controlled by environment variables
 - **TODO:** Allow JSON/CSV/YAML parameter files to be used as inputs
