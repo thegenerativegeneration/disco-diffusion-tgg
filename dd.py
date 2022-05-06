@@ -2179,6 +2179,9 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
     except KeyboardInterrupt:
         logger.warning(f"🛑 Session {session_id} interrupted by user.")
         sendSMS(f"🛑 Session {session_id} aborted!", pargs)
+    finally:
+        gc.collect()
+        torch.cuda.empty_cache()
 
 
 def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_id="N/A"):
