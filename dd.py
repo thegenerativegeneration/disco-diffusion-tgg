@@ -1823,6 +1823,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                                     logger.debug(sql)
                                     dbcon.execute(sql, (args.uuid, time.time(), image_name, convertToBinaryData(image_name)))
                                     dbcon.commit()
+                                    dbcon.close()
                                 else:
                                     logger.debug("No database specified.  Skipping DB update...")
 
@@ -2136,6 +2137,7 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
         outfile.write(json.dumps(jobs))
 
     dbcon = prepareDB(pargs.db)
+    dbcon.close()
     # Generate unique session UUID for DB
     session_id = str(uuid.uuid4())
     logger.info(f"⚒️ Session {session_id} started...")
@@ -2144,12 +2146,15 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
         logger.info(f"💼 Processing job {j+1} of {len(jobs)}...")
         id = str(uuid.uuid4())
         job.uuid = id
-        dbexec(
-            dbcon=dbcon,
-            sql=f"""
-            INSERT INTO jobs (uuid, timestamp, parameters, session_uuid)
-            VALUES ('{job.uuid}',{time.time()},'{json.dumps(job)}','{session_id}');""",
-        )
+        dbcon = getDB(pargs.db)
+        if (dbcon) != None:
+            dbexec(
+                dbcon=dbcon,
+                sql=f"""
+                INSERT INTO jobs (uuid, timestamp, parameters, session_uuid)
+                VALUES ('{job.uuid}',{time.time()},'{json.dumps(job)}','{session_id}');""",
+            )
+            dbcon.close()
 
         processBatch(pargs=job, folders=folders, device=device, is_colab=is_colab, session_id=session_id)
 
