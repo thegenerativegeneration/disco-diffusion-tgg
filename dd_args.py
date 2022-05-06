@@ -181,12 +181,23 @@ def parse(a=None):
 
 # Thanks, https://github.com/aredden
 def arg_configuration_loader(args: Union[pydot, dict] = None) -> pydot:
+    ignorelist = ["f", "ip", "stdin", "control", "hb", "Session.key", "Session.signature_scheme", "shell", "transport", "iopub"]
     # get args if loader called without cli-arguments.
     cliargs = parse().__dict__
     defaults = parse([]).__dict__
 
     if args is None:
+        logger.debug("No arguments directly passed.")
         args = parse().__dict__
+    else:
+        for arg in args:
+            if arg not in ignorelist:
+                if cliargs[arg]:
+                    # cliargs[arg] = args[arg]
+                    pass
+                else:
+                    cliargs[arg] = args[arg]
+        logger.debug(f"Arguments directly passed:\n\n{args}")
 
     # Check whether 'args' is a dict, which would error, since using dot access.
     if type(args) == dict:
@@ -212,7 +223,7 @@ def arg_configuration_loader(args: Union[pydot, dict] = None) -> pydot:
 
     # Override args that came from CLI
     for arg in cliargs:
-        if arg not in confargs and arg not in ["f", "ip", "stdin", "control", "hb", "Session.key", "Session.signature_scheme", "shell", "transport", "iopub"]:
+        if arg not in confargs and arg not in ignorelist:
             logger.debug(f"Found CLI argument '{arg}' value '{cliargs[arg]}' not present in config file.  Adding anyway...")
             confargs[arg] = cliargs[arg]
 
@@ -222,6 +233,19 @@ def arg_configuration_loader(args: Union[pydot, dict] = None) -> pydot:
         if c != d:
             logger.info(f"Overriding config file parameter '{arg}' value to '{cliargs[arg]}' found in CLI.")
             confargs[arg] = cliargs[arg]
+
+    # Override if sent straight to function
+    # for arg in args:
+    #     if arg not in confargs and arg not in ignorelist:
+    #         logger.debug(f"Found function argument '{arg}' value '{cliargs[arg]}' not present in CLI or Config file.  Adding...")
+    #         confargs[arg] = args[arg]
+
+    #     c = DeepHash(cliargs[arg])[cliargs[arg]]
+    #     d = DeepHash(args[arg])[args[arg]]
+
+    #     if c != d:
+    #         logger.info(f"Overriding config file parameter '{arg}' value to '{cliargs[arg]}' found in function args.")
+    #         confargs[arg] = cliargs[arg]
 
     # Check if user wants to generate a defaults configuration file.
     if confargs.gen_config != "":
