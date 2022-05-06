@@ -1,5 +1,4 @@
 import os, sys
-import signal
 import random
 import gc
 from tkinter import N
