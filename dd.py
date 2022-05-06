@@ -2174,13 +2174,11 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
                 dbcon.close()
 
             processBatch(pargs=job, folders=folders, device=device, is_colab=is_colab, session_id=session_id)
+        logger.success(f"✅ Session {session_id} finished by user.")
+        sendSMS(f"✅ Session {session_id} finished.", pargs)
     except KeyboardInterrupt:
         logger.warning(f"🛑 Session {session_id} interrupted by user.")
         sendSMS(f"🛑 Session {session_id} aborted!", pargs)
-        exit(0)
-
-    logger.success(f"✅ Session {session_id} finished by user.")
-    sendSMS(f"✅ Session {session_id} finished.", pargs)
 
 
 def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_id="N/A"):
