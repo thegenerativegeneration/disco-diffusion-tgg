@@ -1153,16 +1153,6 @@ def processKeyFrameProperties(
 
 
 def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=None, folders=None):
-    logfile = f"{folders.batch_folder}/{args.batch_name}({batchNum}).log"
-    logger.configure(
-        handlers=[
-            dict(sink=sys.stdout),
-            dict(
-                sink=logfile
-                # , enqueue=True, serialize=True
-            ),
-        ]
-    )
     logger.info(f"💻 Starting Run: {args.batch_name}({batchNum}) at frame {start_frame}")
     logger.info("Prepping models...")
     model_config = model_and_diffusion_defaults()
@@ -2160,6 +2150,7 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
             INSERT INTO jobs (uuid, timestamp, parameters, session_uuid)
             VALUES ('{job.uuid}',{time.time()},'{json.dumps(job)}','{session_id}');""",
         )
+
         processBatch(pargs=job, folders=folders, device=device, is_colab=is_colab, session_id=session_id)
 
 
@@ -2232,6 +2223,7 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
                 batchNum = len(glob(f"{folders.batch_folder}/{pargs.batch_name}(*)_settings.txt")) - 1
         else:
             batchNum = int(pargs.run_to_resume)
+
         if pargs.resume_from_frame == "latest":
             start_frame = len(glob(folders.batch_folder + f"/{pargs.batch_name}({batchNum})_*.png"))
             if pargs.animation_mode != "3D" and pargs.turbo_mode == True and start_frame > pargs.turbo_preroll and start_frame % int(pargs.turbo_steps) != 0:
@@ -2260,6 +2252,20 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
             or os.path.isfile(f"{folders.batch_folder}/{pargs.batch_name}-{batchNum}_settings.txt") is True
         ):
             batchNum += 1
+
+    logfile = f"{folders.batch_folder}/{pargs.batch_name}({batchNum}).log"
+    print(logfile)
+    logger.configure(
+        handlers=[
+            dict(sink=sys.stdout),
+            dict(
+                sink=logfile
+                # , enqueue=True, serialize=True
+            ),
+        ]
+    )
+    logger.info(f"Logger switched to '{logfile}' logfile.")
+    logger.info(f"Running session '{session_id}' job '{pargs.uuid}'...")
 
     if pargs.set_seed == "random_seed":
         random.seed()
