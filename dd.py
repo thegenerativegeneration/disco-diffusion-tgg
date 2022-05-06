@@ -1,4 +1,5 @@
 import os, sys
+import signal
 import random
 import gc
 from tkinter import N
@@ -34,6 +35,7 @@ from loguru import logger
 from deepdiff import DeepHash
 import sqlite3
 from tqdm.notebook import tqdm
+from twilio.rest import Client
 from guided_diffusion.script_util import (
     create_model_and_diffusion,
     model_and_diffusion_defaults,
@@ -63,6 +65,17 @@ def str2bool(v):
         return False
     else:
         raise argparse.ArgumentTypeError("Boolean value expected.")
+
+
+def sanitize(args):
+    newargs = pydot({})
+    for argname in args:
+        if argname not in ["twilio_account_sid", "twilio_auth_token", "twilio_to", "twilio_from"]:
+            newargs[argname] = args[argname]
+        else:
+            newargs[argname] = "******"
+
+    return newargs
 
 
 def str2json(v):
@@ -512,7 +525,7 @@ def do_3d_step(
 
 def save_settings(setting_list=None, batchFolder=None, batch_name=None, batchNum=None):
     with open(f"{batchFolder}/{batch_name}({batchNum})_settings.txt", "w+") as f:
-        json.dump(pydot(setting_list), f, ensure_ascii=False, indent=4)
+        json.dump(pydot(sanitize(setting_list)), f, ensure_ascii=False, indent=4)
 
 
 def append_dims(x, n):
@@ -1808,7 +1821,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                                 if args.save_metadata == True:
                                     logger.info("Tagging PNG with metadata.")
                                     metadata = PngInfo()
-                                    metadata.add_text("dd_args", json.dumps(args))
+                                    metadata.add_text("dd_args", json.dumps(sanitize(args)))
                                     image.save(image_name, pnginfo=metadata)
                                 else:
                                     image.save(image_name)
@@ -2130,33 +2143,45 @@ def dbexec(dbcon=None, sql=None):
 
 
 def start_run(pargs=None, folders=None, device=None, is_colab=False):
-    multargs = processMultipliers(args=pargs)
-    jobs = processModifiers(multargs)
-    logger.info(f"💼 {len(jobs)} jobs found.")
-    with open(f"{folders.batch_folder}/flightsheet.json", "w") as outfile:
-        outfile.write(json.dumps(jobs))
+    try:
+        multargs = processMultipliers(args=pargs)
+        jobs = processModifiers(multargs)
+        logger.info(f"💼 {len(jobs)} jobs found.")
+        with open(f"{folders.batch_folder}/flightsheet.json", "w") as outfile:
+            sanitizedjobs = []
+            for j in jobs:
+                sanitizedjobs = sanitize(j)
+            outfile.write(json.dumps(sanitizedjobs))
 
-    dbcon = prepareDB(pargs.db)
-    dbcon.close()
-    # Generate unique session UUID for DB
-    session_id = str(uuid.uuid4())
-    logger.info(f"⚒️ Session {session_id} started...")
-    # Cycle through jobs
-    for j, job in enumerate(jobs):
-        logger.info(f"💼 Processing job {j+1} of {len(jobs)}...")
-        id = str(uuid.uuid4())
-        job.uuid = id
-        dbcon = getDB(pargs.db)
-        if (dbcon) != None:
-            dbexec(
-                dbcon=dbcon,
-                sql=f"""
-                INSERT INTO jobs (uuid, timestamp, parameters, session_uuid)
-                VALUES ('{job.uuid}',{time.time()},'{json.dumps(job)}','{session_id}');""",
-            )
+        dbcon = prepareDB(pargs.db)
+        if dbcon:
             dbcon.close()
+        # Generate unique session UUID for DB
+        session_id = str(uuid.uuid4())
+        logger.info(f"⚒️ Session {session_id} started...")
+        # Cycle through jobs
+        for j, job in enumerate(jobs):
+            logger.info(f"💼 Processing job {j+1} of {len(jobs)}...")
+            id = str(uuid.uuid4())
+            job.uuid = id
+            dbcon = getDB(pargs.db)
+            if (dbcon) != None:
+                dbexec(
+                    dbcon=dbcon,
+                    sql=f"""
+                    INSERT INTO jobs (uuid, timestamp, parameters, session_uuid)
+                    VALUES ('{job.uuid}',{time.time()},'{json.dumps(sanitize(job))}','{session_id}');""",
+                )
+                dbcon.close()
 
-        processBatch(pargs=job, folders=folders, device=device, is_colab=is_colab, session_id=session_id)
+            processBatch(pargs=job, folders=folders, device=device, is_colab=is_colab, session_id=session_id)
+    except KeyboardInterrupt:
+        logger.warning(f"🛑 Session {session_id} interrupted by user.")
+        sendSMS(f"🛑 Session {session_id} aborted!", pargs)
+        exit(0)
+
+    logger.success(f"✅ Session {session_id} finished by user.")
+    sendSMS(f"✅ Session {session_id} finished.", pargs)
 
 
 def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_id="N/A"):
@@ -2383,14 +2408,22 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         "db": pargs.db,
         "uuid": pargs.uuid,
         "session_uuid": session_id,
+        "twilio_account_sid": pargs.twilio_account_sid,
+        "twilio_auth_token": pargs.twilio_auth_token,
+        "twilio_to": pargs.twilio_to,
+        "twilio_from": pargs.twilio_from,
+        "per_job_kills": pargs.per_job_kills,
     }
     # args = SimpleNamespace(**args)
     args = pydot(args)  # Thx Zippy
     try:
         do_run(args=args, device=device, is_colab=is_colab, batchNum=batchNum, start_frame=start_frame, folders=folders)
     except KeyboardInterrupt:
-        logger.warning("🛑 Run interrupted by user.")
-        pass
+        logger.warning("🛑 Batch run interrupted by user.")
+        if not args.per_job_kills:
+            raise KeyboardInterrupt
+        else:
+            pass
     finally:
         gc.collect()
         torch.cuda.empty_cache()
@@ -2450,3 +2483,12 @@ def is_in_notebook():
 
 def fix_later():
     logger.warning("Gotta parse Notebook Args")
+
+
+def sendSMS(message, args):
+    if args.twilio_account_sid and args.twilio_auth_token and args.twilio_to and args.twilio_from:
+        client = Client(args.twilio_account_sid, args.twilio_auth_token)
+        message = client.messages.create(to=args.twilio_to, from_=args.twilio_from, body=message)
+        logger.info(f"Twilio SMS sent: '{message.sid}'")
+    else:
+        logger.debug("Not sending SMS")

@@ -151,6 +151,11 @@ def parse(a=None):
     parser.add_argument("--symmetry_loss", help="Symmetry Loss", type=str2bool, default=gp("symmetry_loss", False), required=False)
     parser.add_argument("--symmetry_loss_scale", help="Symmetry Loss Scale", type=int, default=gp("symmetry_loss_scale", 1500), required=False)
     parser.add_argument("--symmetry_switch", help="Symmetry Switch", type=int, default=gp("symmetry_switch", 40), required=False)
+    parser.add_argument("--twilio_account_sid", help="Twilio Account SID", type=int, default=gp("twilio_account_sid", None), required=False)
+    parser.add_argument("--twilio_auth_token", help="Twilio Auth Token", type=int, default=gp("twilio_auth_token", None), required=False)
+    parser.add_argument("--twilio_to", help="Twilio SMS recipient", type=int, default=gp("twilio_to", None), required=False)
+    parser.add_argument("--twilio_from", help="Twilio SMS sender", type=int, default=gp("twilio_from", None), required=False)
+    parser.add_argument("--per_job_kills", help="Allow Control+C killing of single batches", type=str2bool, default=gp("per_job_kills", False), required=False)
 
     parser.add_argument(
         "--gen_config",
