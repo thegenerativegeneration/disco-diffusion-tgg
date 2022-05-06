@@ -1761,7 +1761,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     if j % args.display_rate == 0 or cur_t == -1 or intermediateStep == True:
                         for k, image in enumerate(sample["pred_xstart"]):
                             tqdm.write(f"Batch {i}, step {j}, output {k}:")
-                            tqdm.write(datetime.now().strftime("%y%m%d-%H%M%S_%f"))
+                            # tqdm.write(datetime.now().strftime("%y%m%d-%H%M%S_%f"))
                             percent = math.ceil(j / total_steps * 100)
                             if args.n_batches > 0:
                                 # if intermediates are saved to the subfolder, don't append a step or percentage to the name
@@ -1823,15 +1823,18 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                                 else:
                                     image.save(image_name)
 
-                                logger.success(f"Image saved to '{image_name}'")
+                                logger.info(f"Image saved to '{image_name}'")
                                 dbcon = getDB(args.db)
                                 if (dbcon) != None:
                                     sql = """
                                        INSERT INTO images (job_uuid, timestamp, image_path, image)
                                        VALUES (?, ?, ?, ?)
                                     """
+                                    logger.debug(sql)
                                     dbcon.execute(sql, (args.uuid, time.time(), image_name, convertToBinaryData(image_name)))
                                     dbcon.commit()
+                                else:
+                                    logger.debug("No database specified.  Skipping DB update...")
 
                                 if args.animation_mode == "3D":
                                     # If turbo, save a blended image
