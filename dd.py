@@ -1826,18 +1826,18 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                                     image.save(image_name)
 
                                 logger.info(f"Image saved to '{image_name}'")
-                                dbcon = getDB(args.db)
-                                if (dbcon) != None:
-                                    sql = """
-                                       INSERT INTO images (job_uuid, timestamp, image_path, image)
-                                       VALUES (?, ?, ?, ?)
-                                    """
-                                    logger.debug(sql)
-                                    dbcon.execute(sql, (args.uuid, time.time(), image_name, convertToBinaryData(image_name)))
-                                    dbcon.commit()
-                                    dbcon.close()
-                                else:
-                                    logger.debug("No database specified.  Skipping DB update...")
+                                # dbcon = getDB(args.db)
+                                # if (dbcon) != None:
+                                #     sql = """
+                                #        INSERT INTO images (job_uuid, timestamp, image_path, image)
+                                #        VALUES (?, ?, ?, ?)
+                                #     """
+                                #     logger.debug(sql)
+                                #     dbcon.execute(sql, (args.uuid, time.time(), image_name, convertToBinaryData(image_name)))
+                                #     dbcon.commit()
+                                #     dbcon.close()
+                                # else:
+                                #     logger.debug("No database specified.  Skipping DB update...")
 
                                 if args.animation_mode == "3D":
                                     # If turbo, save a blended image
@@ -2135,10 +2135,11 @@ def prepareDB(db=None):
 
 
 def dbexec(dbcon=None, sql=None):
-    if dbcon != None:
-        logger.debug(sql)
-        dbcon.execute(sql)
-        dbcon.commit()
+    pass
+    # if dbcon != None:
+    #     logger.debug(sql)
+    #     dbcon.execute(sql)
+    #     dbcon.commit()
 
 
 def start_run(pargs=None, folders=None, device=None, is_colab=False):
@@ -2152,9 +2153,9 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
                 sanitizedjobs = sanitize(j)
             outfile.write(json.dumps(sanitizedjobs))
 
-        dbcon = prepareDB(pargs.db)
-        if dbcon:
-            dbcon.close()
+        # dbcon = prepareDB(pargs.db)
+        # if dbcon:
+        #     dbcon.close()
         # Generate unique session UUID for DB
         session_id = str(uuid.uuid4())
         logger.info(f"⚒️ Session {session_id} started...")
@@ -2163,15 +2164,16 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
             logger.info(f"💼 Processing job {j+1} of {len(jobs)}...")
             id = str(uuid.uuid4())
             job.uuid = id
-            dbcon = getDB(pargs.db)
-            if (dbcon) != None:
-                dbexec(
-                    dbcon=dbcon,
-                    sql=f"""
-                    INSERT INTO jobs (uuid, timestamp, parameters, session_uuid)
-                    VALUES ('{job.uuid}',{time.time()},'{json.dumps(sanitize(job))}','{session_id}');""",
-                )
-                dbcon.close()
+            # dbcon = getDB(pargs.db)
+            # if (dbcon) != None:
+            #     pass
+            #     dbexec(
+            #         dbcon=dbcon,
+            #         sql=f"""
+            #         INSERT INTO jobs (uuid, timestamp, parameters, session_uuid)
+            #         VALUES ('{job.uuid}',{time.time()},'{json.dumps(sanitize(job))}','{session_id}');""",
+            #     )
+            #     dbcon.close()
 
             processBatch(pargs=job, folders=folders, device=device, is_colab=is_colab, session_id=session_id)
         logger.success(f"✅ Session {session_id} finished by user.")
@@ -2444,6 +2446,9 @@ def systemDetails(pargs):
         logger.info(nvidiasmi_output)
         # nvidiasmi_ecc_note = subprocess.run(["nvidia-smi", "-i", "0"], stdout=subprocess.PIPE).stdout.decode("utf-8")
         # logger.info(nvidiasmi_ecc_note)
+    if "Tesla T4" in nvidiasmi_output:
+        downgrade_torch_for_t4_res = subprocess.run("pip install torch==1.10.2 torchvision==0.11.3 -q".split(" "), stdout=subprocess.PIPE).stdout.decode("utf-8")
+        logger.info(downgrade_torch_for_t4_res)
 
 
 def getDevice(pargs):
