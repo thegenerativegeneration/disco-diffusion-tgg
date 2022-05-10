@@ -16,3 +16,4 @@ wget
 loguru
 deepdiff
 twilio
+pytorch3d
