@@ -28,13 +28,13 @@ COPY --from=modelprep /scratch/pretrained /workspace/code/pretrained
 
 # Install Python packages
 RUN pip install imageio imageio-ffmpeg==0.4.4 pyspng==0.1.0 lpips datetime timm ipywidgets omegaconf>=2.0.0 pytorch-lightning>=1.0.8 torch-fidelity einops wandb pandas ftfy
-RUN pip install pytorch3d climage wget pydotted loguru gdown argparse
+RUN pip install pytorch3d climage wget pydotted loguru gdown argparse deepdiff twilio
 RUN pip install git+https://github.com/openai/CLIP && \
     pip install git+https://github.com/ahupp/guided-diffusion@packagify && \
     pip install git+https://github.com/ahupp/ResizeRight@packagify && \
     pip install git+https://github.com/ahupp/MiDaS@packagify && \
     pip install git+https://github.com/pytti-tools/AdaBins@installable && \ 
-    pip install git+https://github.com/entmike/pytorch3d-lite@packagify
+    pip install git+https://github.com/facebookresearch/pytorch3d.git@stable
 
 # Precache other big files
 COPY --chown=disco --from=modelprep /scratch/clip /home/disco/.cache/clip

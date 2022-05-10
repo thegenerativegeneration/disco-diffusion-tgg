@@ -30,6 +30,7 @@ def parse(a=None):
     parser.add_argument("--images_out", help="Images out directory", required=False, default=gp("batch_name", "images_out"))
     parser.add_argument("--init_images", help="Init Images directory", required=False, default=gp("batch_name", "init_images"))
     parser.add_argument("--save_metadata", help="Save DD params to image", type=str2bool, default=gp("save_metadata", False))
+    parser.add_argument("--useCPU", help="Use CPU", type=str2bool, default=gp("useCPU", False))
     parser.add_argument(
         "--text_prompts",
         help="Text Prompts",

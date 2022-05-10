@@ -48,7 +48,10 @@ import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 from resize_right import resize
 import disco_xform_utils as dxf
-import pytorch3dlite.pytorch3dlite as p3d
+
+# import pytorch3dlite.pytorch3dlite as p3d
+
+from pytorch3d import transforms
 
 from clip import clip
 from ipywidgets import Output
@@ -503,7 +506,7 @@ def do_3d_step(
         math.radians(rotate_xyz_degrees[1]),
         math.radians(rotate_xyz_degrees[2]),
     ]
-    rot_mat = p3d.euler_angles_to_matrix(torch.tensor(rotate_xyz, device=device), "XYZ").unsqueeze(0)
+    rot_mat = transforms.euler_angles_to_matrix(torch.tensor(rotate_xyz, device=device), "XYZ").unsqueeze(0)
     logger.info("rot_mat: " + str(rot_mat))
     next_step_pil = dxf.transform_image_3d(
         img_filepath,
@@ -827,7 +830,7 @@ def generate_eye_views(
         ray_rotation = theta if i == 0 else -theta
         translate_xyz = [-(ray_origin) * trans_scale, 0, 0]
         rotate_xyz = [0, (ray_rotation), 0]
-        rot_mat = p3d.euler_angles_to_matrix(torch.tensor(rotate_xyz, device=device), "XYZ").unsqueeze(0)
+        rot_mat = transforms.euler_angles_to_matrix(torch.tensor(rotate_xyz, device=device), "XYZ").unsqueeze(0)
         transformed_image = dxf.transform_image_3d(
             f"{batchFolder}/{filename}",
             midas_model,
@@ -1185,7 +1188,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                 "num_res_blocks": 2,
                 "resblock_updown": True,
                 "use_checkpoint": args.use_checkpoint,
-                "use_fp16": True,
+                "use_fp16": not args.useCPU,
                 "use_scale_shift_norm": True,
             }
         )
@@ -1205,7 +1208,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                 "num_res_blocks": 2,
                 "resblock_updown": True,
                 "use_checkpoint": args.use_checkpoint,
-                "use_fp16": True,
+                "use_fp16": not args.useCPU,
                 "use_scale_shift_norm": True,
             }
         )
@@ -1400,16 +1403,18 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     frame_num,
                     midas_model,
                     midas_transform,
-                    translations={
-                        "angle_series": angle_series,
-                        "zoom_series": zoom_series,
-                        "translation_x_series": translation_x_series,
-                        "translation_y_series": translation_y_series,
-                        "translation_z_series": translation_z_series,
-                        "rotation_3d_x_series": rotation_3d_x_series,
-                        "rotation_3d_y_series": rotation_3d_y_series,
-                        "rotation_3d_z_series": rotation_3d_z_series,
-                    },
+                    translations=pydot(
+                        {
+                            "angle_series": angle_series,
+                            "zoom_series": zoom_series,
+                            "translation_x_series": translation_x_series,
+                            "translation_y_series": translation_y_series,
+                            "translation_z_series": translation_z_series,
+                            "rotation_3d_x_series": rotation_3d_x_series,
+                            "rotation_3d_y_series": rotation_3d_y_series,
+                            "rotation_3d_z_series": rotation_3d_z_series,
+                        }
+                    ),
                     device=device,
                     TRANSLATION_SCALE=args.TRANSLATION_SCALE,
                     args=args,
@@ -1426,7 +1431,22 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                             "oldFrameScaled.png",
                             frame_num,
                             midas_model,
-                            midas_transform,
+                            # midas_transform,
+                            # translations=pydot(
+                            #     {
+                            #         "angle_series": angle_series,
+                            #         "zoom_series": zoom_series,
+                            #         "translation_x_series": translation_x_series,
+                            #         "translation_y_series": translation_y_series,
+                            #         "translation_z_series": translation_z_series,
+                            #         "rotation_3d_x_series": rotation_3d_x_series,
+                            #         "rotation_3d_y_series": rotation_3d_y_series,
+                            #         "rotation_3d_z_series": rotation_3d_z_series,
+                            #     }
+                            # ),
+                            # device=device,
+                            # TRANSLATION_SCALE=args.TRANSLATION_SCALE,
+                            # args=args,
                         )
                         old_frame.save("oldFrameScaled.png")
                         if frame_num % int(args.turbo_steps) != 0:
@@ -2454,18 +2474,14 @@ def systemDetails(pargs):
 def getDevice(pargs):
     import sys
 
-    DEVICE = torch.device(pargs.cuda_device if torch.cuda.is_available() else "cpu")
+    DEVICE = torch.device(pargs.cuda_device if (torch.cuda.is_available() and not pargs.useCPU) else "cpu")
     logger.info("✅ Using device:", DEVICE)
     device = DEVICE  # At least one of the modules expects this name..
-    try:
-        # Fails if CPU is set
+    # Fails if CPU is set
+    if not pargs.useCPU:
         if torch.cuda.get_device_capability(DEVICE) == (8, 0):  ## A100 fix thanks to Emad
             logger.info("Disabling CUDNN for A100 gpu", file=sys.stderr)
             torch.backends.cudnn.enabled = False
-    except:
-        logger.warning("Are you using a CPU?  Check your PyTorch version if you get errors.")
-        # torch.backends.cudnn.enabled = False
-        pass
     return device
 
 

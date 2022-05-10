@@ -1,5 +1,8 @@
+from cv2 import imread
 import torch, torchvision
-import pytorch3dlite.pytorch3dlite as p3d
+
+# import pytorch3dlite.pytorch3dlite as p3d
+from pytorch3d import renderer
 from midas import utils as midas_utils
 from PIL import Image
 import numpy as np
@@ -112,8 +115,9 @@ def transform_image_3d(
     depth_tensor = torch.from_numpy(depth_map).squeeze().to(device)
 
     pixel_aspect = 1.0  # really.. the aspect of an individual pixel! (so usually 1.0)
-    persp_cam_old = p3d.FoVPerspectiveCameras(near, far, pixel_aspect, fov=fov_deg, degrees=True, device=device)
-    persp_cam_new = p3d.FoVPerspectiveCameras(
+
+    persp_cam_old = renderer.FoVPerspectiveCameras(near, far, pixel_aspect, fov=fov_deg, degrees=True, device=device)
+    persp_cam_new = renderer.FoVPerspectiveCameras(
         near,
         far,
         pixel_aspect,
