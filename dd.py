@@ -1434,7 +1434,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                             "oldFrameScaled.png",
                             frame_num,
                             midas_model,
-                            # midas_transform,
+                            midas_transform,
                             # translations=pydot(
                             #     {
                             #         "angle_series": angle_series,
