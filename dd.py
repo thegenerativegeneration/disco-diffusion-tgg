@@ -1369,7 +1369,9 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                 if args.resume_run and frame_num == args.start_frame:
                     img_0 = cv2.imread(args.batchFolder + f"/{args.batch_name}({args.batchNum})_{args.start_frame-1:04}.png")
                 else:
-                    img_0 = cv2.imread("prevFrame.png")
+
+                    # img_0 = cv2.imread("prevFrame.png")
+                    img_0 = cv2.imread(f"{args.batchFolder}/prevFrame.png")
                 center = (1 * img_0.shape[1] // 2, 1 * img_0.shape[0] // 2)
                 trans_mat = np.float32([[1, 0, translation_x], [0, 1, translation_y]])
                 rot_mat = cv2.getRotationMatrix2D(center, angle, zoom)
@@ -1396,7 +1398,8 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     if args.turbo_mode and frame_num > args.turbo_preroll:
                         shutil.copyfile(img_filepath, "oldFrameScaled.png")
                 else:
-                    img_filepath = "/content/prevFrame.png" if is_colab else "prevFrame.png"
+                    # img_filepath = "/content/prevFrame.png" if is_colab else "prevFrame.png"
+                    img_filepath = f"{args.batchFolder}/prevFrame.png"
 
                 next_step_pil = do_3d_step(
                     img_filepath,
@@ -1835,7 +1838,8 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                                         batchNum=args.batchNum,
                                     )
                                 if args.animation_mode != "None":
-                                    image.save("prevFrame.png")
+                                    # image.save("prevFrame.png")
+                                    image.save(f"{args.batchFolder}/prevFrame.png")
                                 image_name = f"{args.batchFolder}/{filename}"
                                 if args.save_metadata == True:
                                     logger.info("Tagging PNG with metadata.")
@@ -1864,7 +1868,8 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                                     if args.turbo_mode and frame_num > 0:
                                         # Mix new image with prevFrameScaled
                                         blend_factor = (1) / int(args.turbo_steps)
-                                        newFrame = cv2.imread("prevFrame.png")  # This is already updated..
+                                        # newFrame = cv2.imread("prevFrame.png")  # This is already updated..
+                                        newFrame = cv2.imread(f"{args.batchFolder}/prevFrame.png")
                                         prev_frame_warped = cv2.imread("prevFrameScaled.png")
                                         blendedImage = cv2.addWeighted(
                                             newFrame,
