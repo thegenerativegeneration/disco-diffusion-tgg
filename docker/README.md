@@ -2,13 +2,12 @@
 
 ## Introduction
 
-This is a Docker build file that will preinstall dependencies, packages, Git repos, and pre-cache the large model files needed by Disco Diffusion.
-
-## TO-DO:
-
-- Accept parameters via files, currently works off env vars.
+This is a Docker build file that will preinstall dependencies, packages, Git repos, and allow mounting and persisting pre-downloaded large model files needed by Disco Diffusion.
 
 ## Change Log
+
+- `2.0`
+  Completely change Docker Image Setup
 
 - `1.1`
 
@@ -18,37 +17,43 @@ This is a Docker build file that will preinstall dependencies, packages, Git rep
 
   Initial build file created based on the DD 5.1 Git repo.  This initial build is deliberately meant to work touch-free of any of the existing Python code written.  It does handle some of the pre-setup tasks already done in the Python code such as pip packages, Git clones, and even pre-caching the model files for faster launch speed.
 
-## Build the Prep Image
-The prep image is broken out from the `main` folder's `Dockerfile` to help with long build context times (or wget download times after intitial build.)  This prep image build contains all the large model files required by Disco Diffusion.
-
-From a terminal in the `docker/prep` directory, run:
-```sh
-docker build -t disco-diffusion-prep:5.1 .
-```
 ## Build the Image
 
-From a terminal in the `docker/main` directory, run:
+From a terminal in the `docker` directory, run:
 
 ```sh
-docker build -t disco-diffusion:5.1 .
+docker build -t disco-diffusion .
+```
+## Create some volumes
+
+```sh
+mkdir -p /disco-diffusion/images_out
+mkdir -p /disco-diffusion/init_images
+mkdir -p /disco-diffusion/models
+mkdir -p /disco-diffusion/configs
 ```
 
-## Run as a Container
+## Run a Test Job
 
-This example runs Disco Diffusion in a Docker container.  It maps `images_out` and `init_images` to the container's working directory to access by the host OS.
+This example runs Disco Diffusion in a Docker container.  It maps 4 volumes (`images_out`, `init_images`, `configs`, and `models`) to the container.  It runs with all default parameters for sake of a barebones example.  Press Control+C to terminate the run after confirming your test run works.
+
 ```sh
 docker run --rm -it \
     -v $(echo ~)/disco-diffusion/images_out:/workspace/code/images_out \
     -v $(echo ~)/disco-diffusion/init_images:/workspace/code/init_images \
+    -v $(echo ~)/disco-diffusion/models:/workspace/disco-diffusion-1/models \
+    -v $(echo ~)/disco-diffusion/configs:/workspace/disco-diffusion/configs \
     --gpus=all \
     --name="disco-diffusion" --ipc=host \
     --user $(id -u):$(id -g) \
-    -e text_prompts='{"0":["cybernetic organism, artstation, Art by Beksinski, unreal engine"]}' \
-    -e steps=500 \
-disco-diffusion:5.1 python disco-diffusion-1/disco.py
+disco-diffusion python disco.py
 ```
 
 ## Passing Parameters
 
-- As of change 1.1, parameters can be optionally specified with environment variables passed in the Docker command.  See example above for `text_prompts` and `steps` for an example.
-- TODO: Optionally pass parameters via JSON/CSV file
+- Parameters can be optionally specified with:
+  - Environment variables passed to the Docker Container
+  - Command-Line arguments (use `--help` to get a list)
+- YAML files can now also be used.  See parameter `--config_file`
+- Examples to come.
+

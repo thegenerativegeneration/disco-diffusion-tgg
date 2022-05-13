@@ -13,13 +13,15 @@ RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install -y tzdata image
 RUN useradd -ms /bin/bash disco
 USER disco
 
-# Set up code directories
-RUN mkdir -p models
-
 ARG REPO=https://github.com/entmike/disco-diffusion-1.git
 
 COPY docker-requirements.txt docker-requirements.txt
 RUN pip install -r docker-requirements.txt
 
+VOLUME "/workspace/models"
+ENV TORCH_HOME=/workspace/disco-diffusion-1/models
 # Clone Git repositories
-RUN git clone $REPO 
+RUN git clone $REPO
+VOLUME "/workspace/disco-diffusion-1/images_out"
+WORKDIR /workspace/disco-diffusion-1
+CMD [ "/bin/bash" ]
