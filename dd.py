@@ -2435,6 +2435,10 @@ def getDevice(pargs):
     device = DEVICE  # At least one of the modules expects this name..
     # Fails if CPU is set
     if not pargs.useCPU:
+        # V100 fix thanks to Sami
+        if pargs.ViTL14 is True or pargs.ViTL14_336 is True and "V100" in torch.cuda.get_device_name(0):
+            print("📦 Downgrading pytorch...")
+            subprocess.run("pip install torch==1.10.2 torchvision==0.11.3 -q".split(" "), stdout=subprocess.PIPE).stdout.decode("utf-8")
         if torch.cuda.get_device_capability(DEVICE) == (8, 0):  ## A100 fix thanks to Emad
             logger.info("Disabling CUDNN for A100 gpu", file=sys.stderr)
             torch.backends.cudnn.enabled = False
