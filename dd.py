@@ -2153,7 +2153,8 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
             #         VALUES ('{job.uuid}',{time.time()},'{json.dumps(sanitize(job))}','{session_id}');""",
             #     )
             #     dbcon.close()
-
+            logger.info(f"🌲 Setting TORCH_HOME environment variable to {job.model_path}...")
+            os.environ["TORCH_HOME"] = job.model_path
             processBatch(pargs=job, folders=folders, device=device, is_colab=is_colab, session_id=session_id)
         logger.success(f"✅ Session {session_id} finished by user.")
         sendSMS(f"✅ Session {session_id} finished.", pargs)
@@ -2435,8 +2436,8 @@ def getDevice(pargs):
     device = DEVICE  # At least one of the modules expects this name..
     # Fails if CPU is set
     if not pargs.useCPU:
-        # V100 fix thanks to Sami
-        if pargs.ViTL14 is True or pargs.ViTL14_336 is True and "V100" in torch.cuda.get_device_name(0):
+        # V100 and T4 fix thanks to Sami
+        if pargs.ViTL14 is True or pargs.ViTL14_336 is True and ("V100" in torch.cuda.get_device_name(0) or "T4" in torch.cuda.get_device_name(0)):
             print("📦 Downgrading pytorch...")
             subprocess.run("pip install torch==1.10.2 torchvision==0.11.3 -q".split(" "), stdout=subprocess.PIPE).stdout.decode("utf-8")
         if torch.cuda.get_device_capability(DEVICE) == (8, 0):  ## A100 fix thanks to Emad
