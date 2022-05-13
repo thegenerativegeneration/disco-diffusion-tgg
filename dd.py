@@ -1275,7 +1275,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
         secondary_model.eval().requires_grad_(False).to(device)
 
     logger.info(f"🤖 Loading LPIPS...")
-    lpips_model = lpips.LPIPS(net="vgg", verbose=False, model_path=f"{args.model_path}/vgg16-397923af.pth").to(device)
+    lpips_model = lpips.LPIPS(net="vgg", pretrained=True, verbose=False, model_path=f"{args.model_path}/vgg16-397923af.pth").to(device)
 
     seed = args.seed
 
