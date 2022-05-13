@@ -20,6 +20,7 @@ RUN pip install -r docker-requirements.txt
 
 VOLUME "/workspace/models"
 ENV TORCH_HOME=/workspace/disco-diffusion-1/models
+ARG DD_VERSION=0.1
 # Clone Git repositories
 RUN git clone $REPO
 VOLUME "/workspace/disco-diffusion-1/images_out"
