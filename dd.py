@@ -2437,10 +2437,10 @@ def getDevice(pargs):
     # Fails if CPU is set
     if not pargs.useCPU:
         # V100 and T4 fix thanks to Sami
-        if pargs.ViTL14 is True or pargs.ViTL14_336 is True and ("V100" in torch.cuda.get_device_name(0) or "T4" in torch.cuda.get_device_name(0)):
-            logger.warning(f"⚠️ {torch.cuda.get_device_name(0)} detected as well as ViTL14/ViTL14_336 models.  Pytorch needs to be downgraded to avoid CUDA error...")
-            logger.info("📦 Downgrading pytorch...")
-            subprocess.run("pip install torch==1.10.2 torchvision==0.11.3 -q".split(" "), stdout=subprocess.PIPE).stdout.decode("utf-8")
+        # if pargs.ViTL14 is True or pargs.ViTL14_336 is True and ("V100" in torch.cuda.get_device_name(0) or "T4" in torch.cuda.get_device_name(0)):
+        #     logger.warning(f"⚠️ {torch.cuda.get_device_name(0)} detected as well as ViTL14/ViTL14_336 models.  Pytorch needs to be downgraded to avoid CUDA error...")
+        #     logger.info("📦 Downgrading pytorch...")
+        #     subprocess.run("pip install torch==1.10.2 torchvision==0.11.3 -q".split(" "), stdout=subprocess.PIPE).stdout.decode("utf-8")
         if torch.cuda.get_device_capability(DEVICE) == (8, 0):  ## A100 fix thanks to Emad
             logger.info("Disabling CUDNN for A100 gpu", file=sys.stderr)
             torch.backends.cudnn.enabled = False
