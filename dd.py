@@ -48,6 +48,7 @@ import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 from resize_right import resize
 import disco_xform_utils as dxf
+from downloadModels import loadModels
 
 # import pytorch3dlite.pytorch3dlite as p3d
 
@@ -463,6 +464,14 @@ def symm_loss(im, lpm):
     h = int(im.shape[3] / 2)
     h1, h2 = im[:, :, :, :h], im[:, :, :, h:]
     h2 = TF.hflip(h2)
+    return lpm(h1, h2)
+
+
+# Credit: aztec_man#3032 on Discord
+def v_symm_loss(im, lpm):
+    h = int(im.shape[2] / 2)
+    h1, h2 = im[:, :, :h, :], im[:, :, h:, :]
+    h2 = TF.vflip(h2)
     return lpm(h1, h2)
 
 
@@ -1213,8 +1222,12 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
             }
         )
     symmetry_switch = 100.0 * (1.0 - (args.symmetry_switch / args.steps))
+    v_symmetry_switch = 100.0 * (1.0 - (args.v_symmetry_switch / args.steps))
+
     if args.symmetry_loss:
         logger.info(f"Symmetry ends at {100-symmetry_switch}%")
+    if args.v_symmetry_loss:
+        logger.info(f"Vertical Symmetry ends at {100-v_symmetry_switch}%")
     timestep_respacing = f"ddim{args.steps}"
     diffusion_steps = (1000 // args.steps) * args.steps if args.steps < 1000 else args.steps
     model_config.update({"timestep_respacing": timestep_respacing, "diffusion_steps": diffusion_steps})
@@ -1233,7 +1246,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
 
     def clipLoad(model_name):
         logger.info(f"🤖 Loading model '{model_name}'...")
-        model = clip.load(model_name, jit=False)[0].eval().requires_grad_(False).to(device)
+        model = clip.load(model_name, jit=False, download_root="models")[0].eval().requires_grad_(False).to(device)
         clip_models.append(model)
 
     if args.ViTB32 is True:
@@ -1262,10 +1275,9 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
         secondary_model.eval().requires_grad_(False).to(device)
 
     logger.info(f"🤖 Loading LPIPS...")
-    lpips_model = lpips.LPIPS(net="vgg", verbose=False).to(device)
+    lpips_model = lpips.LPIPS(net="vgg", verbose=False, model_path=f"{args.model_path}/vgg16-397923af.pth").to(device)
 
     seed = args.seed
-    logger.info("🌱 Seed used:", args.seed)
 
     normalize = T.Normalize(
         mean=[0.48145466, 0.4578275, 0.40821073],
@@ -1489,6 +1501,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
         loss_values = []
 
         if seed is not None:
+            logger.info(f"🌱 Seed used: {seed}")
             np.random.seed(seed)
             random.seed(seed)
             torch.manual_seed(seed)
@@ -1707,6 +1720,10 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     sloss = symm_loss(x_in, lpips_model)
                     loss = loss + sloss.sum() * args.symmetry_loss_scale
 
+                if args.v_symmetry_loss and np.array(t.cpu())[0] > 10 * v_symmetry_switch:
+                    sloss = v_symm_loss(x_in, lpips_model)
+                    loss = loss + sloss.sum() * args.v_symmetry_loss_scale
+
                 x_in_grad += torch.autograd.grad(loss, x_in)[0]
                 if torch.isnan(x_in_grad).any() == False:
                     grad = -torch.autograd.grad(x_in, x, x_in_grad)[0]
@@ -1718,11 +1735,6 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                 magnitude = grad.square().mean().sqrt()
                 return grad * magnitude.clamp(max=args.clamp_max) / magnitude  # min=-0.02, min=-clamp_max,
             return grad
-
-        if args.diffusion_sampling_mode == "ddim":
-            sample_fn = diffusion.ddim_sample_loop_progressive
-        else:
-            sample_fn = diffusion.plms_sample_loop_progressive
 
         image_display = Output()
         for i in range(args.n_batches):
@@ -1748,7 +1760,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                 )
 
             if args.diffusion_sampling_mode == "ddim":
-                samples = sample_fn(
+                samples = diffusion.ddim_sample_loop_progressive(
                     model,
                     (args.batch_size, 3, args.side_y, args.side_x),
                     clip_denoised=args.clip_denoised,
@@ -1761,7 +1773,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     eta=args.eta,
                 )
             else:
-                samples = sample_fn(
+                samples = diffusion.plms_sample_loop_progressive(
                     model,
                     (args.batch_size, 3, args.side_y, args.side_x),
                     clip_denoised=args.clip_denoised,
@@ -1973,7 +1985,7 @@ def setupFolders(is_colab=False, PROJECT_DIR=None, pargs=None):
             "batch_folder": f"{PROJECT_DIR}/{pargs.images_out}/{batch_name}" if pargs.images_out[0] != "/" else f"{pargs.images_out}/{batch_name}",
             "initDirPath": f"{PROJECT_DIR}/{pargs.init_images}" if pargs.init_images[0] != "/" else pargs.init_images,
             "outDirPath": f"{PROJECT_DIR}/{pargs.images_out}" if pargs.images_out[0] != "/" else pargs.images_out,
-            "model_path": f"{PROJECT_DIR}/models",
+            "model_path": f"{PROJECT_DIR}/{pargs.models}" if pargs.models[0] != "/" else pargs.models,
             "pretrain_path": f"{PROJECT_DIR}/pretrained",
         }
     )
@@ -1985,64 +1997,6 @@ def setupFolders(is_colab=False, PROJECT_DIR=None, pargs=None):
     createPath(folders.pretrain_path)
 
     return folders
-
-
-def loadModels(folders):
-    import wget
-
-    # Download models if not present
-    for m in [
-        {
-            "file": f"{folders.model_path}/dpt_large-midas-2f21e586.pt",
-            "sources": [
-                {"url": "https://github.com/intel-isl/DPT/releases/download/1_0/dpt_large-midas-2f21e586.pt"},
-                {"url": "https://ipfs.io/ipfs/QmbpkBqVrayBzaxHMSnk917ng2EopZsdFK8pFkku9sbr8H?filename=dpt_large-midas-2f21e586.pt"},
-            ],
-        },
-        {
-            "file": f"{folders.model_path}/512x512_diffusion_uncond_finetune_008100.pt",
-            "sources": [
-                {"url": "https://v-diffusion.s3.us-west-2.amazonaws.com/512x512_diffusion_uncond_finetune_008100.pt"},
-                {"url": "https://huggingface.co/lowlevelware/512x512_diffusion_unconditional_ImageNet/resolve/main/512x512_diffusion_uncond_finetune_008100.pt"},
-                {"url": "https://ipfs.io/ipfs/QmYNhbgnjPRuprob6WiELb3egd8rZa2xTEYGzAfkLuaKJw?filename=512x512_diffusion_uncond_finetune_008100.pt"},
-            ],
-        },
-        {
-            "file": f"{folders.model_path}/256x256_diffusion_uncond.pt",
-            "sources": [
-                {"url": "https://openaipublic.blob.core.windows.net/diffusion/jul-2021/256x256_diffusion_uncond.pt"},
-                {"url": "https://www.dropbox.com/s/9tqnqo930mpnpcn/256x256_diffusion_uncond.pt"},
-                {"url": "https://ipfs.io/ipfs/QmRkZ4JBLHwpZqeAuULYeGzo3TZqfgnrg6bFvUXFneotP9?filename=256x256_diffusion_uncond.pt"},
-            ],
-        },
-        {
-            "file": f"{folders.model_path}/secondary_model_imagenet_2.pth",
-            "sources": [
-                {"url": "https://v-diffusion.s3.us-west-2.amazonaws.com/secondary_model_imagenet_2.pth"},
-                {"url": "https://ipfs.io/ipfs/QmX1VDNBAsAbupaLLkL2AxTQsxbFFYac8rqM9croNm3H9U?filename=secondary_model_imagenet_2.pth"},
-            ],
-        },
-        {
-            "file": f"{folders.pretrain_path}/AdaBins_nyu.pt",
-            "sources": [
-                {"url": "https://cloudflare-ipfs.com/ipfs/Qmd2mMnDLWePKmgfS8m6ntAg4nhV5VkUyAydYBp8cWWeB7/AdaBins_nyu.pt"},
-                {"url": "https://ipfs.io/ipfs/QmfZv38n2u3b3gZMtTqSwEXDEM27BtQdksefCYy7HA9VAv?filename=AdaBins_nyu.pt"},
-            ],
-        },
-    ]:
-        if not os.path.exists(f'{m["file"]}'):
-            downloaded = False
-            for source in m["sources"]:
-                if not downloaded:
-                    url = source["url"]
-                    try:
-                        logger.info(f'🌍 (First time setup): Downloading model from {url} to {m["file"]}')
-                        wget.download(url, m["file"])
-                        downloaded = True
-                    except:
-                        logger.error(f"Download failed.  Fallback URLs will be attempted until exhausted.")
-        else:
-            logger.success(f'✅ Model already downloaded: {m["file"]}')
 
 
 def processMultipliers(args=None):
@@ -2212,9 +2166,7 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
 
 
 def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_id="N/A"):
-    USE_ADABINS = True
     TRANSLATION_SCALE = 1.0 / 200.0
-    MAX_ADABINS_AREA = 500000
     videoFramesFolder = None
     partialFolder = None
     # Get corrected sizes
@@ -2311,19 +2263,16 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
             batchNum += 1
 
     logfile = f"{folders.batch_folder}/{pargs.batch_name}({batchNum}).log"
-    print(logfile)
     logger.configure(
         handlers=[
-            dict(sink=sys.stdout),
-            dict(
-                sink=logfile
-                # , enqueue=True, serialize=True
-            ),
+            {"sink": sys.stdout, "level": "INFO"},
+            {"sink": logfile, "level": "DEBUG"},
         ]
     )
     logger.info(f"Logger switched to '{logfile}' logfile.")
     logger.info(f"Running session '{session_id}' job '{pargs.uuid}'...")
 
+    seed = -1
     if pargs.set_seed == "random_seed":
         random.seed()
         seed = random.randint(0, 2**32)
@@ -2430,6 +2379,9 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         "symmetry_loss": pargs.symmetry_loss,
         "symmetry_loss_scale": pargs.symmetry_loss_scale,
         "symmetry_switch": pargs.symmetry_switch,
+        "v_symmetry_loss": pargs.v_symmetry_loss,
+        "v_symmetry_loss_scale": pargs.v_symmetry_loss_scale,
+        "v_symmetry_switch": pargs.v_symmetry_switch,
         "modifiers": pargs.modifiers,
         "save_metadata": pargs.save_metadata,
         "db": pargs.db,
@@ -2449,8 +2401,7 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         logger.warning("🛑 Batch run interrupted by user.")
         if not args.per_job_kills:
             raise KeyboardInterrupt
-        else:
-            pass
+        pass
     finally:
         gc.collect()
         torch.cuda.empty_cache()
@@ -2480,7 +2431,7 @@ def getDevice(pargs):
     import sys
 
     DEVICE = torch.device(pargs.cuda_device if (torch.cuda.is_available() and not pargs.useCPU) else "cpu")
-    logger.info("✅ Using device:", DEVICE)
+    logger.info(f"✅ Using device: {DEVICE}")
     device = DEVICE  # At least one of the modules expects this name..
     # Fails if CPU is set
     if not pargs.useCPU:

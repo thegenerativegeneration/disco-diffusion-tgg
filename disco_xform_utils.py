@@ -1,19 +1,12 @@
 from cv2 import imread
 import torch, torchvision
-
-# import pytorch3dlite.pytorch3dlite as p3d
+from loguru import logger
 from pytorch3d import renderer
 from midas import utils as midas_utils
 from PIL import Image
 import numpy as np
-import sys, math
+import math
 from adabins.infer import InferenceHelper
-
-try:
-    from adabins.infer import InferenceHelper
-except:
-    print("disco_xform_utils.py failed to import InferenceHelper.  Please ensure that AdaBins directory is in the path (i.e. via sys.path.append('./AdaBins') or other means).")
-    sys.exit()
 
 MAX_ADABINS_AREA = 500000
 MIN_ADABINS_AREA = 448 * 448
@@ -46,8 +39,8 @@ def transform_image_3d(
         """
         predictions using nyu dataset
         """
-        print("Running AdaBins depth estimation implementation...")
-        infer_helper = InferenceHelper(dataset="nyu")
+        logger.debug("Running AdaBins depth estimation implementation...")
+        infer_helper = InferenceHelper(pretrained_path_base="models", dataset="nyu")
 
         image_pil_area = w * h
         if image_pil_area > MAX_ADABINS_AREA:
@@ -84,7 +77,7 @@ def transform_image_3d(
     midas_optimize = True
 
     # MiDaS depth estimation implementation
-    print("Running MiDaS depth estimation implementation...")
+    logger.debug("Running MiDaS depth estimation implementation...")
     sample = torch.from_numpy(img_midas_input).float().to(device).unsqueeze(0)
     if midas_optimize == True and device == torch.device("cuda"):
         sample = sample.to(memory_format=torch.channels_last)
@@ -98,7 +91,7 @@ def transform_image_3d(
     ).squeeze()
     prediction_np = prediction_torch.clone().cpu().numpy()
 
-    print("Finished depth estimation.")
+    logger.debug("Finished depth estimation.")
     torch.cuda.empty_cache()
 
     # MiDaS makes the near values greater, and the far values lesser. Let's reverse that and try to align with AdaBins a bit better.
