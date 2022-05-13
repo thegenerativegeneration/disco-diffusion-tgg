@@ -27,10 +27,10 @@ docker build -t disco-diffusion .
 ## Create some volumes
 
 ```sh
-mkdir -p /disco-diffusion/images_out
-mkdir -p /disco-diffusion/init_images
-mkdir -p /disco-diffusion/models
-mkdir -p /disco-diffusion/configs
+mkdir -p ~/disco-diffusion/images_out
+mkdir -p ~/disco-diffusion/init_images
+mkdir -p ~/disco-diffusion/models
+mkdir -p ~/disco-diffusion/configs
 ```
 
 ## Run a Test Job
