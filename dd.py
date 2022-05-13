@@ -1985,7 +1985,7 @@ def setupFolders(is_colab=False, PROJECT_DIR=None, pargs=None):
             "batch_folder": f"{PROJECT_DIR}/{pargs.images_out}/{batch_name}" if pargs.images_out[0] != "/" else f"{pargs.images_out}/{batch_name}",
             "initDirPath": f"{PROJECT_DIR}/{pargs.init_images}" if pargs.init_images[0] != "/" else pargs.init_images,
             "outDirPath": f"{PROJECT_DIR}/{pargs.images_out}" if pargs.images_out[0] != "/" else pargs.images_out,
-            "model_path": f"{PROJECT_DIR}/{pargs.models}" if pargs.models[0] != "/" else pargs.models,
+            "model_path": f"{PROJECT_DIR}/{pargs.model_path}" if pargs.model_path[0] != "/" else pargs.model_path,
             "pretrain_path": f"{PROJECT_DIR}/pretrained",
         }
     )
