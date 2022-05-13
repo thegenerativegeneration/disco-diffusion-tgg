@@ -261,7 +261,7 @@ def arg_configuration_loader(args: Union[pydot, dict] = None) -> pydot:
     if confargs.gen_config != "":
         confgen = confargs.gen_config
         if confgen == "AUTO":
-            confgen = f"configs/{confargs.batch_name}.yaml"
+            confgen = f"configs/{confargs.batch_name}_gen.yaml"
 
         if confgen.endswith(".yml") or confgen.endswith(".yaml"):
             gco = confargs.gen_config_only
