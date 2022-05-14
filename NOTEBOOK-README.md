@@ -12,7 +12,11 @@
 
 
 ## Changes/Enhancements
-
+- **May 14, 2022**
+  - Make this README shared across notebooks (`NOTEBOOK-README.md`)
+- **May 13, 2022**
+  - Implement (very) experimental vertical symmetry.  (Credit: **`aztec_man#3032`** on Discord)
+  - Add GPU detection warning for T4 and V100 GPUs.  (I cannot implement the `!pip install torch==1.10.2 torchvision==0.11.3 -q` patch because it breaks `pytorch3d`, sorry guys, I'll keep trying to find another solution.
 - **May 11, 2022**
   - Discord link fixed
 - **May 10, 2022**
