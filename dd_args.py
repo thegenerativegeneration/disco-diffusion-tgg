@@ -56,6 +56,32 @@ def parse(a=None):
         required=False,
     )
     parser.add_argument(
+        "--prompt_salad",
+        help="Prompt Salad Mode",
+        type=str2bool,
+        default=gp("prompt_salad", False),
+        required=False,
+    )
+    parser.add_argument(
+        "--prompt_salad_path",
+        help="Prompt Salad Path",
+        default=gp("prompt_salad_path", "prompt_salad"),
+        required=False,
+    )
+    parser.add_argument(
+        "--prompt_salad_template",
+        help="Prompt Salad Template",
+        default=gp("prompt_salad_path", "{colors} {things} in the {custom/customword} shape of {shapes}, art by {artists}"),
+        required=False,
+    )
+    parser.add_argument(
+        "--prompt_salad_amount",
+        help="Prompt Salad Amount",
+        type=int,
+        default=gp("prompt_salad_amount", 5),
+        required=False,
+    )
+    parser.add_argument(
         "--multipliers",
         help="Multipliers",
         type=str2json,

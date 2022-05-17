@@ -49,6 +49,7 @@ import torchvision.transforms.functional as TF
 from resize_right import resize
 import disco_xform_utils as dxf
 from downloadModels import loadModels
+import dd_prompt_salad
 
 # import pytorch3dlite.pytorch3dlite as p3d
 
@@ -1995,13 +1996,21 @@ def setupFolders(is_colab=False, PROJECT_DIR=None, pargs=None):
     createPath(folders.outDirPath)
     createPath(folders.model_path)
     createPath(folders.pretrain_path)
-
     return folders
 
 
 def processMultipliers(args=None):
     multargs = []
     pargs = pydot(json.loads(json.dumps(args)))
+    if pargs.prompt_salad == True:
+        salad = dd_prompt_salad.make_random_prompt(amount=pargs.prompt_salad_amount, prompt_salad_path=pargs.prompt_salad_path, template=pargs.prompt_salad_template)
+        # Add Text Prompts if prompt_salad is on
+        if not pargs.multipliers:
+            pargs.multipliers = pydot({})
+        if not pargs.multipliers.text_prompts:
+            pargs.multipliers.text_prompts = []
+        for bowl in salad:
+            pargs.multipliers.text_prompts.append({"0": bowl})
     c = DeepHash(pargs.multipliers)[pargs.multipliers]
     d = DeepHash({})[{}]
     if c == d:
@@ -2059,8 +2068,8 @@ def processModifiers(mods=[], args=[]):
                 if mult_found == False:
                     newargs.multipliers = {}
 
-            multargs = processMultipliers(args=newargs)
-            mods = processModifiers(mods=mods, args=multargs)
+            multargs = processMultipliers(args=newargs, folders=folders)
+            mods = processModifiers(mods=mods, args=multargs, folders=folders)
     return mods
 
 
@@ -2143,16 +2152,6 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
             logger.info(f"💼 Processing job {j+1} of {len(jobs)}...")
             id = str(uuid.uuid4())
             job.uuid = id
-            # dbcon = getDB(pargs.db)
-            # if (dbcon) != None:
-            #     pass
-            #     dbexec(
-            #         dbcon=dbcon,
-            #         sql=f"""
-            #         INSERT INTO jobs (uuid, timestamp, parameters, session_uuid)
-            #         VALUES ('{job.uuid}',{time.time()},'{json.dumps(sanitize(job))}','{session_id}');""",
-            #     )
-            #     dbcon.close()
             logger.info(f"🌲 Setting TORCH_HOME environment variable to {job.model_path}...")
             os.environ["TORCH_HOME"] = job.model_path
             processBatch(pargs=job, folders=folders, device=device, is_colab=is_colab, session_id=session_id)

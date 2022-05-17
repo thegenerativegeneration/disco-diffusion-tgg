@@ -12,6 +12,7 @@ images_out/TimeToDisco/*
 prevFrame.png
 prevFrameScaled.png
 disco.db
+prompts/custom/*
 
 # Ignore some examples
 examples/local/*
@@ -21,6 +22,7 @@ examples/configs/*
 !examples/configs/artstudy2.yml
 !examples/configs/explore.yaml
 !examples/local/README.md
+!prompts/custom/README.md
 !examples/linux
 !examples/windows
 
