@@ -1,6 +1,6 @@
 # These settings are base settings for this job set.  All other settings are the
 # "Notebook defaults" that a typically set.
-batch_name: explore5
+batch_name: explore
 set_seed: 54322
 n_batches: 1
 steps: 150
@@ -15,11 +15,7 @@ multipliers:
   - 0:
         - High detailed,8k,Architectural Concepts spaceship with dark matter phoenix, art by li shuxing , art by greg rutkowski, art by thomas kinkade, unreal engine
   - 0:
-        - decaying zombie, rotting flesh, tumors and teeth with maggots and pimples, gaping vagina, undead cthulu, trending on artstation, art by lisa wolfe
-  - 0:
         - extremely immaculate matte painting of an exquisite castle of grandeur constructed atop a cliff face and overlooking the vast seascape, Gothic architecture and Royalcore aesthetic, illustrated by Hope Hoover
-  - 0:
-        - A Low angle of Hong Kong Apartments, Architecture of Density, Michael Wolf, Zdzisław Beksiński, 8k Gigapixel, High Resolution, red color scheme.
   clip_guidance_scale:
   - 500
   - 1000
