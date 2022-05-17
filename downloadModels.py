@@ -100,11 +100,11 @@ def loadModels(folders=pydot({"model_path": "models"})):
             "hash": "3035c92b350959924f9f00213499208652fc7ea050643e8b385c2dac08641f02",
             "sources": [{"url": "https://openaipublic.azureedge.net/clip/models/3035c92b350959924f9f00213499208652fc7ea050643e8b385c2dac08641f02/ViT-L-14-336px.pt"}],
         },
-        {
-            "file": f"{folders.model_path}/vgg16-397923af.pth",
-            "hash": "397923af8e79cdbb6a7127f12361acd7a2f83e06b05044ddf496e83de57a5bf0",
-            "sources": [{"url": "https://download.pytorch.org/models/vgg16-397923af.pth"}],
-        },
+        # {
+        #     "file": f"{folders.model_path}/vgg16-397923af.pth",
+        #     "hash": "397923af8e79cdbb6a7127f12361acd7a2f83e06b05044ddf496e83de57a5bf0",
+        #     "sources": [{"url": "https://download.pytorch.org/models/vgg16-397923af.pth"}],
+        # },
     ]:
         if not os.path.exists(f'{m["file"]}'):
             downloaded = False
