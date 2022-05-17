@@ -5,7 +5,12 @@ from loguru import logger
 try:
     from pytorch3d import renderer
 except:
-    logger.warning("Cannot import pytorch3d renderer.  This broke in Colab on 5/14/2022.  3D animations will likely fail.  Thank Google? -entmike")
+    logger.warning(
+        """Cannot import pytorch3d renderer module.  
+    This broke in Colab on as recently as 5/14/2022.  3D animations will likely fail.  
+    Thanks Google?  If anyone knows a workaround, contact me through issues on GitHub
+    """
+    )
 from midas import utils as midas_utils
 from PIL import Image
 import numpy as np
