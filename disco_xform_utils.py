@@ -5,12 +5,7 @@ from loguru import logger
 try:
     from pytorch3d import renderer
 except:
-    logger.warning(
-        """Cannot import pytorch3d renderer module.  
-    This broke in Colab on as recently as 5/14/2022.  3D animations will likely fail.  
-    Thanks Google?  If anyone knows a workaround, contact me through issues on GitHub
-    """
-    )
+    logger.warning("""Cannot import pytorch3d renderer module.  3D animations won't work.""")
 from midas import utils as midas_utils
 from PIL import Image
 import numpy as np
