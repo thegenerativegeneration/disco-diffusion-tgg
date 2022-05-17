@@ -12,6 +12,8 @@
 
 
 ## Changes/Enhancements
+- **May 16, 2022**
+  - `prompt_salad` feature implemented.  Make Mad Libs out of a `prompt_salad_template`!
 - **May 14, 2022**
   - Make this README shared across notebooks (`NOTEBOOK-README.md`)
 - **May 13, 2022**
