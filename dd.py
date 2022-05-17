@@ -2010,7 +2010,7 @@ def processMultipliers(args=None):
         if not pargs.multipliers.text_prompts:
             pargs.multipliers.text_prompts = []
         for bowl in salad:
-            pargs.multipliers.text_prompts.append({"0": bowl})
+            pargs.multipliers.text_prompts.append({"0": [bowl]})
     c = DeepHash(pargs.multipliers)[pargs.multipliers]
     d = DeepHash({})[{}]
     if c == d:
