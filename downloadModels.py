@@ -43,6 +43,7 @@ def loadModels(folders=pydot({"model_path": "models"})):
             "hash": "983e3de6f95c88c81b2ca7ebb2c217933be1973b1ff058776b970f901584613a",
             "sources": [
                 {"url": "https://v-diffusion.s3.us-west-2.amazonaws.com/secondary_model_imagenet_2.pth"},
+                {"url": "https://the-eye.eu/public/AI/models/v-diffusion/secondary_model_imagenet_2.pth"},
                 {"url": "https://ipfs.io/ipfs/QmX1VDNBAsAbupaLLkL2AxTQsxbFFYac8rqM9croNm3H9U?filename=secondary_model_imagenet_2.pth"},
             ],
         },
