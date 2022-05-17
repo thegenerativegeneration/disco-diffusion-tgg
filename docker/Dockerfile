@@ -14,7 +14,7 @@ RUN useradd -ms /bin/bash disco
 USER disco
 
 ARG REPO=https://github.com/entmike/disco-diffusion-1.git
-ARG DD_VERSION=2.0
+ARG DD_VERSION=2.0.1
 
 COPY docker-requirements.txt docker-requirements.txt
 RUN pip install -r docker-requirements.txt
