@@ -1,13 +1,21 @@
 # These settings are base settings for this job set.  All other settings are the
 # "Notebook defaults" that a typically set.
-batch_name: explore
-set_seed: 54321
+batch_name: explore5
+set_seed: 54322
 n_batches: 1
 steps: 150
 # Multipliers create a Cartesian Product of all combinations to create a set of
 # jobs
 multipliers:
   text_prompts:
+  - 0:
+        - cybernetic organism, artstation, Art by Beksinski, unreal engine
+  - 0:
+        - High detailed,8k, The angel of death holds a scale in front of an abandoned building in a zombie apocalypse, art by li shuxing , art by greg rutkowski, art by thomas kinkade, unreal engine
+  - 0:
+        - High detailed,8k,Architectural Concepts spaceship with dark matter phoenix, art by li shuxing , art by greg rutkowski, art by thomas kinkade, unreal engine
+  - 0:
+        - decaying zombie, rotting flesh, tumors and teeth with maggots and pimples, gaping vagina, undead cthulu, trending on artstation, art by lisa wolfe
   - 0:
         - extremely immaculate matte painting of an exquisite castle of grandeur constructed atop a cliff face and overlooking the vast seascape, Gothic architecture and Royalcore aesthetic, illustrated by Hope Hoover
   - 0:

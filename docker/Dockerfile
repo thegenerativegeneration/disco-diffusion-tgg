@@ -14,13 +14,13 @@ RUN useradd -ms /bin/bash disco
 USER disco
 
 ARG REPO=https://github.com/entmike/disco-diffusion-1.git
+ARG DD_VERSION=2.0
 
 COPY docker-requirements.txt docker-requirements.txt
 RUN pip install -r docker-requirements.txt
 
 VOLUME "/workspace/models"
 ENV TORCH_HOME=/workspace/disco-diffusion-1/models
-ARG DD_VERSION=0.1
 # Clone Git repositories
 RUN git clone $REPO
 VOLUME "/workspace/disco-diffusion-1/images_out"
