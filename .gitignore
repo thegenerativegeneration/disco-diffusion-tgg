@@ -21,6 +21,7 @@ examples/configs/*
 !examples/configs/artstudy.yml
 !examples/configs/artstudy2.yml
 !examples/configs/explore.yaml
+!examples/configs/prompt-salad.yml
 !examples/local/README.md
 !prompts/custom/README.md
 !examples/linux
