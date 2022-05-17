@@ -1,7 +1,11 @@
 from cv2 import imread
 import torch, torchvision
 from loguru import logger
-from pytorch3d import renderer
+
+try:
+    from pytorch3d import renderer
+except:
+    print("Cannot import pytorch renderer")
 from midas import utils as midas_utils
 from PIL import Image
 import numpy as np
