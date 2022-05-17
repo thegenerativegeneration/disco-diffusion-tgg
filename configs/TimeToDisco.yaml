@@ -3,8 +3,6 @@ RN50: true
 RN50x16: false
 RN50x4: false
 RN50x64: false
-Session.key: '1'
-Session.signature_scheme: '1'
 ViTB16: true
 ViTB32: true
 ViTL14: false
@@ -33,13 +31,11 @@ diffusion_sampling_mode: ddim
 display_rate: 50
 eta: 0.8
 extract_nth_frame: 2
-f: '1'
 far_plane: 10000
 fov: 40
 frames_scale: 1500
 frames_skip_steps: 60%
 fuzzy_prompt: false
-hb: '1'
 image_prompts: {}
 images_out: images_out
 init_image: null
@@ -48,8 +44,6 @@ init_scale: 1000
 intermediate_saves: 0
 intermediates_in_subfolder: true
 interp_spline: Linear
-iopub: '1'
-ip: '1'
 key_frames: true
 max_frames: 10000
 midas_depth_model: dpt_large
@@ -77,12 +71,10 @@ sampling_mode: bicubic
 sat_scale: 0
 save_metadata: false
 set_seed: random_seed
-shell: '1'
 simple_nvidia_smi_display: true
 skip_augs: false
 skip_steps: 10
 skip_video_for_run_all: false
-stdin: '1'
 steps: 250
 symmetry_loss: false
 symmetry_loss_scale: 1500
