@@ -17,7 +17,6 @@ clip_denoised: false
 clip_guidance_scale: 5000
 console_preview: false
 console_preview_width: 80
-control: '1'
 cuda_device: cuda:0
 cut_ic_pow: 1
 cut_icgray_p: '[0.2]*400+[0]*600'
