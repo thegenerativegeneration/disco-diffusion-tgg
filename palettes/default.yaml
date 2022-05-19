@@ -1,0 +1,10 @@
+mode: generated
+red:
+  low: 0
+  high: 128
+green:
+  low: 0
+  high: 255
+blue:
+  low: 50
+  high: 255

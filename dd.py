@@ -50,6 +50,7 @@ from resize_right import resize
 import disco_xform_utils as dxf
 from downloadModels import loadModels
 import dd_prompt_salad
+import voronoi_utils
 
 # import pytorch3dlite.pytorch3dlite as p3d
 
@@ -182,16 +183,17 @@ def create_perlin_noise(
     return out
 
 
-def regen_perlin(perlin_mode=None, device=None, batch_size=None):
+def regen_perlin(perlin_mode=None, device=None, batch_size=None, side_x=None, side_y=None):
+    logger.info("Regenerating Perlin Noise...")
     if perlin_mode == "color":
-        init = create_perlin_noise([1.5**-i * 0.5 for i in range(12)], 1, 1, False, device=device)
-        init2 = create_perlin_noise([1.5**-i * 0.5 for i in range(8)], 4, 4, False, device=device)
+        init = create_perlin_noise([1.5**-i * 0.5 for i in range(12)], 1, 1, False, device=device, side_x=side_x, side_y=side_y)
+        init2 = create_perlin_noise([1.5**-i * 0.5 for i in range(8)], 4, 4, False, device=device, side_x=side_x, side_y=side_y)
     elif perlin_mode == "gray":
-        init = create_perlin_noise([1.5**-i * 0.5 for i in range(12)], 1, 1, True, device=device)
-        init2 = create_perlin_noise([1.5**-i * 0.5 for i in range(8)], 4, 4, True, device=device)
+        init = create_perlin_noise([1.5**-i * 0.5 for i in range(12)], 1, 1, True, device=device, side_x=side_x, side_y=side_y)
+        init2 = create_perlin_noise([1.5**-i * 0.5 for i in range(8)], 4, 4, True, device=device, side_x=side_x, side_y=side_y)
     else:
-        init = create_perlin_noise([1.5**-i * 0.5 for i in range(12)], 1, 1, False, device=device)
-        init2 = create_perlin_noise([1.5**-i * 0.5 for i in range(8)], 4, 4, True, device=device)
+        init = create_perlin_noise([1.5**-i * 0.5 for i in range(12)], 1, 1, False, device=device, side_x=side_x, side_y=side_y)
+        init2 = create_perlin_noise([1.5**-i * 0.5 for i in range(8)], 4, 4, True, device=device, side_x=side_x, side_y=side_y)
 
     init = TF.to_tensor(init).add(TF.to_tensor(init2)).div(2).to(device).unsqueeze(0).mul(2).sub(1)
     del init2
@@ -999,164 +1001,27 @@ def processKeyFrameProperties(
     rotation_3d_y,
     rotation_3d_z,
 ):
-    try:
-        angle_series = get_inbetweens(parse_key_frames(angle), max_frames=max_frames, interp_spline=interp_spline)
-    except RuntimeError as e:
-        logger.warning(
-            "WARNING: You have selected to use key frames, but you have not "
-            "formatted `angle` correctly for key frames.\n"
-            "Attempting to interpret `angle` as "
-            f'"0: ({angle})"\n'
-            "Please read the instructions to find out how to use key frames "
-            "correctly.\n"
-        )
-        angle = f"0: ({angle})"
-        angle_series = get_inbetweens(parse_key_frames(angle), max_frames=max_frames, interp_spline=interp_spline)
+    def tweens(propertyName, value, max_frames, interp_spline):
+        try:
+            v = value
+            series = get_inbetweens(parse_key_frames(v), max_frames=max_frames, interp_spline=interp_spline)
+        except RuntimeError as e:
+            logger.warning(f"WARNING: You have selected to use key frames, but you have not formatted '{propertyName}' correctly for key frames.")
+            logger.warning(f"Attempting to interpret '{propertyName}' as '0: ({value})'")
+            logger.warning("Please read the instructions to find out how to use key frames correctly.")
+            v = f"0: ({value})"
+            series = get_inbetweens(parse_key_frames(v), max_frames=max_frames, interp_spline=interp_spline)
+        return v, series
 
-    try:
-        zoom_series = get_inbetweens(parse_key_frames(zoom), max_frames=max_frames, interp_spline=interp_spline)
-    except RuntimeError as e:
-        logger.warning(
-            "WARNING: You have selected to use key frames, but you have not "
-            "formatted `zoom` correctly for key frames.\n"
-            "Attempting to interpret `zoom` as "
-            f'"0: ({zoom})"\n'
-            "Please read the instructions to find out how to use key frames "
-            "correctly.\n"
-        )
-        zoom = f"0: ({zoom})"
-        zoom_series = get_inbetweens(parse_key_frames(zoom), max_frames=max_frames, interp_spline=interp_spline)
+    angle, angle_series = tweens("angle", angle, max_frames, interp_spline)
+    zoom, zoom_series = tweens("zoom", zoom, max_frames, interp_spline)
+    translation_x, translation_x_series = tweens("translation_x", translation_x, max_frames, interp_spline)
+    translation_y, translation_y_series = tweens("translation_y", translation_y, max_frames, interp_spline)
+    translation_z, translation_z_series = tweens("translation_z", translation_z, max_frames, interp_spline)
+    rotation_3d_x, rotation_3d_x_series = tweens("rotation_3d_x", rotation_3d_x, max_frames, interp_spline)
+    rotation_3d_y, rotation_3d_y_series = tweens("rotation_3d_y", rotation_3d_y, max_frames, interp_spline)
+    rotation_3d_z, rotation_3d_z_series = tweens("rotation_3d_z", rotation_3d_z, max_frames, interp_spline)
 
-    try:
-        translation_x_series = get_inbetweens(
-            parse_key_frames(translation_x),
-            max_frames=max_frames,
-            interp_spline=interp_spline,
-        )
-    except RuntimeError as e:
-        logger.warning(
-            "WARNING: You have selected to use key frames, but you have not "
-            "formatted `translation_x` correctly for key frames.\n"
-            "Attempting to interpret `translation_x` as "
-            f'"0: ({translation_x})"\n'
-            "Please read the instructions to find out how to use key frames "
-            "correctly.\n"
-        )
-        translation_x = f"0: ({translation_x})"
-        translation_x_series = get_inbetweens(
-            parse_key_frames(translation_x),
-            max_frames=max_frames,
-            interp_spline=interp_spline,
-        )
-
-    try:
-        translation_y_series = get_inbetweens(
-            parse_key_frames(translation_y),
-            max_frames=max_frames,
-            interp_spline=interp_spline,
-        )
-    except RuntimeError as e:
-        logger.warning(
-            "WARNING: You have selected to use key frames, but you have not "
-            "formatted `translation_y` correctly for key frames.\n"
-            "Attempting to interpret `translation_y` as "
-            f'"0: ({translation_y})"\n'
-            "Please read the instructions to find out how to use key frames "
-            "correctly.\n"
-        )
-        translation_y = f"0: ({translation_y})"
-        translation_y_series = get_inbetweens(
-            parse_key_frames(translation_y),
-            max_frames=max_frames,
-            interp_spline=interp_spline,
-        )
-
-    try:
-        translation_z_series = get_inbetweens(
-            parse_key_frames(translation_z),
-            max_frames=max_frames,
-            interp_spline=interp_spline,
-        )
-    except RuntimeError as e:
-        logger.warning(
-            "WARNING: You have selected to use key frames, but you have not "
-            "formatted `translation_z` correctly for key frames.\n"
-            "Attempting to interpret `translation_z` as "
-            f'"0: ({translation_z})"\n'
-            "Please read the instructions to find out how to use key frames "
-            "correctly.\n"
-        )
-        translation_z = f"0: ({translation_z})"
-        translation_z_series = get_inbetweens(
-            parse_key_frames(translation_z),
-            max_frames=max_frames,
-            interp_spline=interp_spline,
-        )
-
-    try:
-        rotation_3d_x_series = get_inbetweens(
-            parse_key_frames(rotation_3d_x),
-            max_frames=max_frames,
-            interp_spline=interp_spline,
-        )
-    except RuntimeError as e:
-        logger.warning(
-            "WARNING: You have selected to use key frames, but you have not "
-            "formatted `rotation_3d_x` correctly for key frames.\n"
-            "Attempting to interpret `rotation_3d_x` as "
-            f'"0: ({rotation_3d_x})"\n'
-            "Please read the instructions to find out how to use key frames "
-            "correctly.\n"
-        )
-        rotation_3d_x = f"0: ({rotation_3d_x})"
-        rotation_3d_x_series = get_inbetweens(
-            parse_key_frames(rotation_3d_x),
-            max_frames=max_frames,
-            interp_spline=interp_spline,
-        )
-
-    try:
-        rotation_3d_y_series = get_inbetweens(
-            parse_key_frames(rotation_3d_y),
-            max_frames=max_frames,
-            interp_spline=interp_spline,
-        )
-    except RuntimeError as e:
-        logger.warning(
-            "WARNING: You have selected to use key frames, but you have not "
-            "formatted `rotation_3d_y` correctly for key frames.\n"
-            "Attempting to interpret `rotation_3d_y` as "
-            f'"0: ({rotation_3d_y})"\n'
-            "Please read the instructions to find out how to use key frames "
-            "correctly.\n"
-        )
-        rotation_3d_y = f"0: ({rotation_3d_y})"
-        rotation_3d_y_series = get_inbetweens(
-            parse_key_frames(rotation_3d_y),
-            max_frames=max_frames,
-            interp_spline=interp_spline,
-        )
-    try:
-        rotation_3d_z_series = get_inbetweens(
-            parse_key_frames(rotation_3d_z),
-            max_frames=max_frames,
-            interp_spline=interp_spline,
-        )
-    except RuntimeError as e:
-        logger.warning(
-            "WARNING: You have selected to use key frames, but you have not "
-            "formatted `rotation_3d_z` correctly for key frames.\n"
-            "Attempting to interpret `rotation_3d_z` as "
-            f'"0: ({rotation_3d_z})"\n'
-            "Please read the instructions to find out how to use key frames "
-            "correctly.\n"
-        )
-        rotation_3d_z = f"0: ({rotation_3d_z})"
-        rotation_3d_z_series = get_inbetweens(
-            parse_key_frames(rotation_3d_z),
-            max_frames=max_frames,
-            interp_spline=interp_spline,
-        )
     return (
         angle,
         zoom,
@@ -1357,12 +1222,19 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
 
         # Inits if not video frames
         if args.animation_mode != "Video Input":
-            if args.init_image == "":
+            if args.init_image in ["", "None", "none", "NONE"]:
                 init_image = None
             else:
                 init_image = args.init_image
             init_scale = args.init_scale
             skip_steps = args.skip_steps
+
+            # Credit: aztec_man#3032 (5/17/2022)
+            if args.target_image in ["", "None", "none", "NONE"]:
+                target_image = None
+            else:
+                target_image = args.target_image
+                target_scale = args.target_scale
 
         if args.animation_mode == "2D":
             if args.key_frames:
@@ -1443,27 +1315,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                         next_step_pil.save("oldFrameScaled.png")  # stash for later blending
                     elif frame_num > args.turbo_preroll:
                         # set up 2 warped image sequences, old & new, to blend toward new diff image
-                        old_frame = do_3d_step(
-                            "oldFrameScaled.png",
-                            frame_num,
-                            midas_model,
-                            midas_transform,
-                            # translations=pydot(
-                            #     {
-                            #         "angle_series": angle_series,
-                            #         "zoom_series": zoom_series,
-                            #         "translation_x_series": translation_x_series,
-                            #         "translation_y_series": translation_y_series,
-                            #         "translation_z_series": translation_z_series,
-                            #         "rotation_3d_x_series": rotation_3d_x_series,
-                            #         "rotation_3d_y_series": rotation_3d_y_series,
-                            #         "rotation_3d_z_series": rotation_3d_z_series,
-                            #     }
-                            # ),
-                            # device=device,
-                            # TRANSLATION_SCALE=args.TRANSLATION_SCALE,
-                            # args=args,
-                        )
+                        old_frame = do_3d_step("oldFrameScaled.png", frame_num, midas_model, midas_transform)
                         old_frame.save("oldFrameScaled.png")
                         if frame_num % int(args.turbo_steps) != 0:
                             logger.info("turbo skip this frame: skipping clip diffusion steps")
@@ -1531,7 +1383,9 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
 
         logger.info(f"Frame {frame_num} 📝 Prompt: {frame_prompt}")
 
+        anim_complete_perc = (frame_num + 1) / args.max_frames
         model_stats = []
+
         for clip_model in clip_models:
             cutn = 16
             model_stat = {
@@ -1587,61 +1441,75 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
             init = init.resize((args.side_x, args.side_y), resample=Image.LANCZOS)
             init = TF.to_tensor(init).to(device).unsqueeze(0).mul(2).sub(1)
 
-        if args.perlin_init:
-            if args.perlin_mode == "color":
-                init = create_perlin_noise(
-                    [1.5**-i * 0.5 for i in range(12)],
-                    1,
-                    1,
-                    False,
-                    side_x=args.side_x,
-                    side_y=args.side_y,
-                )
-                init2 = create_perlin_noise(
-                    [1.5**-i * 0.5 for i in range(8)],
-                    4,
-                    4,
-                    False,
-                    side_x=args.side_x,
-                    side_y=args.side_y,
-                )
-            elif args.perlin_mode == "gray":
-                init = create_perlin_noise(
-                    [1.5**-i * 0.5 for i in range(12)],
-                    1,
-                    1,
-                    True,
-                    side_x=args.side_x,
-                    side_y=args.side_y,
-                )
-                init2 = create_perlin_noise(
-                    [1.5**-i * 0.5 for i in range(8)],
-                    4,
-                    4,
-                    True,
-                    side_x=args.side_x,
-                    side_y=args.side_y,
-                )
-            else:
-                init = create_perlin_noise(
-                    [1.5**-i * 0.5 for i in range(12)],
-                    1,
-                    1,
-                    False,
-                    side_x=args.side_x,
-                    side_y=args.side_y,
-                )
-                init2 = create_perlin_noise(
-                    [1.5**-i * 0.5 for i in range(8)],
-                    4,
-                    4,
-                    True,
-                    side_x=args.side_x,
-                    side_y=args.side_y,
-                )
-            # init = TF.to_tensor(init).add(TF.to_tensor(init2)).div(2).to(device)
-            init = TF.to_tensor(init).add(TF.to_tensor(init2)).div(2).to(device).unsqueeze(0).mul(2).sub(1)
-            del init2
+        # Credit: aztec_man#3032 (5/17/2022)
+        target = None
+        if target_image is not None:
+            target = Image.open(fetch(target_image)).convert("RGB")
+            target = target.resize((args.side_x, args.side_y), resample=Image.LANCZOS)
+            target = TF.to_tensor(target).to(device).unsqueeze(0).mul(2).sub(1)
+
+        if args.init_generator == "voronoi":
+            logger.info(f"Generating Voronoi Init ({args.voronoi_points} points)...")
+            init = voronoi_utils.render(width=args.side_x, height=args.side_y, num_points=args.voronoi_points).convert("RGB")
+            init = init.resize((args.side_x, args.side_y), resample=Image.LANCZOS)
+            init = TF.to_tensor(init).to(device).unsqueeze(0).mul(2).sub(1)
+
+        if args.init_generator == "perlin":
+            if args.perlin_init:
+                if args.perlin_mode == "color":
+                    init = create_perlin_noise(
+                        [1.5**-i * 0.5 for i in range(12)],
+                        1,
+                        1,
+                        False,
+                        side_x=args.side_x,
+                        side_y=args.side_y,
+                    )
+                    init2 = create_perlin_noise(
+                        [1.5**-i * 0.5 for i in range(8)],
+                        4,
+                        4,
+                        False,
+                        side_x=args.side_x,
+                        side_y=args.side_y,
+                    )
+                elif args.perlin_mode == "gray":
+                    init = create_perlin_noise(
+                        [1.5**-i * 0.5 for i in range(12)],
+                        1,
+                        1,
+                        True,
+                        side_x=args.side_x,
+                        side_y=args.side_y,
+                    )
+                    init2 = create_perlin_noise(
+                        [1.5**-i * 0.5 for i in range(8)],
+                        4,
+                        4,
+                        True,
+                        side_x=args.side_x,
+                        side_y=args.side_y,
+                    )
+                else:
+                    init = create_perlin_noise(
+                        [1.5**-i * 0.5 for i in range(12)],
+                        1,
+                        1,
+                        False,
+                        side_x=args.side_x,
+                        side_y=args.side_y,
+                    )
+                    init2 = create_perlin_noise(
+                        [1.5**-i * 0.5 for i in range(8)],
+                        4,
+                        4,
+                        True,
+                        side_x=args.side_x,
+                        side_y=args.side_y,
+                    )
+                # init = TF.to_tensor(init).add(TF.to_tensor(init2)).div(2).to(device)
+                init = TF.to_tensor(init).add(TF.to_tensor(init2)).div(2).to(device).unsqueeze(0).mul(2).sub(1)
+                del init2
 
         cur_t = None
 
@@ -1713,9 +1581,13 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                 sat_losses = torch.abs(x_in - x_in.clamp(min=-1, max=1)).mean()
                 loss = tv_losses.sum() * args.tv_scale + range_losses.sum() * args.range_scale + sat_losses.sum() * args.sat_scale
 
-                if init is not None and args.init_scale:
+                if init is not None and init_scale:
                     init_losses = lpips_model(x_in, init)
-                    loss = loss + init_losses.sum() * args.init_scale
+                    loss = loss + init_losses.sum() * init_scale
+
+                if target is not None and args.target_scale:
+                    target_losses = lpips_model(x_in, target)
+                    loss = loss + target_losses.sum() * args.target_scale * anim_complete_perc**2
 
                 if args.symmetry_loss and np.array(t.cpu())[0] > 10 * symmetry_switch:
                     sloss = symm_loss(x_in, lpips_model)
@@ -1753,12 +1625,17 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
             cur_t = diffusion.num_timesteps - skip_steps - 1
             total_steps = cur_t
 
-            if args.perlin_init:
-                init = regen_perlin(
-                    perlin_mode=args.perlin_mode,
-                    device=device,
-                    batch_size=args.batch_size,
-                )
+            if args.init_generator == "voronoi":
+                logger.info(f"Generating Voronoi Init ({args.voronoi_points} points)...")
+                paletteFile = None
+                if args.voronoi_palette not in [None, "None", "none", "NONE", ""]:
+                    paletteFile = f"{folders.root_path}/palettes/{args.voronoi_palette}"
+                init = voronoi_utils.render(width=args.side_x, height=args.side_y, num_points=args.voronoi_points, palette_config=paletteFile).convert("RGB")
+                init = init.resize((args.side_x, args.side_y), resample=Image.LANCZOS)
+                init = TF.to_tensor(init).to(device).unsqueeze(0).mul(2).sub(1)
+            if args.init_generator == "perlin":
+                if args.perlin_init:
+                    init = regen_perlin(perlin_mode=args.perlin_mode, device=device, batch_size=args.batch_size, side_x=args.side_x, side_y=args.side_y)
 
             if args.diffusion_sampling_mode == "ddim":
                 samples = diffusion.ddim_sample_loop_progressive(
@@ -1939,39 +1816,18 @@ def createVideo(args):
     image_path = f"{args.batchFolder}/({run})_%04d.png"
     filepath = f"{args.batchFolder}({run}).mp4"
 
-    cmd = [
-        "ffmpeg",
-        "-y",
-        "-vcodec",
-        "png",
-        "-r",
-        str(fps),
-        "-start_number",
-        str(init_frame),
-        "-i",
-        image_path,
-        "-frames:v",
-        str(last_frame + 1),
-        "-c:v",
-        "libx264",
-        "-vf",
-        f"fps={fps}",
-        "-pix_fmt",
-        "yuv420p",
-        "-crf",
-        "17",
-        "-preset",
-        "veryslow",
-        filepath,
-    ]
-
-    process = subprocess.Popen(cmd, cwd=f"{args.batchFolder}", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    if process.returncode != 0:
-        logger.error(stderr)
-        raise RuntimeError(stderr)
-    else:
-        logger.info("The video is ready and saved to the images folder")
+    cmd = f"ffmpeg -y -vcodec png -r {str(fps)} -start_number {str(init_frame)} -i {image_path} -frames:v {str(last_frame + 1)} -c:v libx264 -vf fps={fps} -pix_fmt yuv420p -crf 17 -preset veryslow {filepath}"
+    try:
+        process = subprocess.Popen(cmd.split(" "), cwd=f"{args.batchFolder}", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        if process.returncode != 0:
+            logger.error(stderr)
+            raise RuntimeError(stderr)
+        else:
+            logger.info("The video is ready and saved to the images folder")
+    except:
+        logger.warning("⚠️ ffmpeg command failed.  Did you install ffmpeg?")
+        pass
 
 
 def setupFolders(is_colab=False, PROJECT_DIR=None, pargs=None):
@@ -1987,7 +1843,6 @@ def setupFolders(is_colab=False, PROJECT_DIR=None, pargs=None):
             "initDirPath": f"{PROJECT_DIR}/{pargs.init_images}" if pargs.init_images[0] != "/" else pargs.init_images,
             "outDirPath": f"{PROJECT_DIR}/{pargs.images_out}" if pargs.images_out[0] != "/" else pargs.images_out,
             "model_path": f"{PROJECT_DIR}/{pargs.model_path}" if pargs.model_path[0] != "/" else pargs.model_path,
-            "pretrain_path": f"{PROJECT_DIR}/pretrained",
         }
     )
 
@@ -1995,7 +1850,6 @@ def setupFolders(is_colab=False, PROJECT_DIR=None, pargs=None):
     createPath(folders.initDirPath)
     createPath(folders.outDirPath)
     createPath(folders.model_path)
-    createPath(folders.pretrain_path)
     return folders
 
 
@@ -2068,8 +1922,8 @@ def processModifiers(mods=[], args=[]):
                 if mult_found == False:
                     newargs.multipliers = {}
 
-            multargs = processMultipliers(args=newargs, folders=folders)
-            mods = processModifiers(mods=mods, args=multargs, folders=folders)
+            multargs = processMultipliers(args=newargs)
+            mods = processModifiers(mods=mods, args=multargs)
     return mods
 
 
@@ -2308,6 +2162,7 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         "text_prompts": pargs.text_prompts,
         "console_preview": pargs.console_preview,
         "console_preview_width": pargs.console_preview_width,
+        "skip_video_for_run_all": pargs.skip_video_for_run_all,
         "image_prompts_series": pargs.image_prompts,
         "seed": seed,
         "display_rate": pargs.display_rate,
@@ -2316,7 +2171,9 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         "batch_name": pargs.batch_name,
         "steps": pargs.steps,
         "init_image": pargs.init_image,
+        "target_image": pargs.target_image,
         "init_scale": pargs.init_scale,
+        "target_scale": pargs.target_scale,
         "skip_steps": pargs.skip_steps,
         "side_x": side_x,
         "side_y": side_y,
@@ -2392,6 +2249,9 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         "twilio_to": pargs.twilio_to,
         "twilio_from": pargs.twilio_from,
         "per_job_kills": pargs.per_job_kills,
+        "init_generator": pargs.init_generator,
+        "voronoi_points": pargs.voronoi_points,
+        "voronoi_palette": pargs.voronoi_palette,
     }
     # args = SimpleNamespace(**args)
     args = pydot(args)  # Thx Zippy
