@@ -87,9 +87,10 @@ Follow these steps for the first time that you are running Disco Diffusion from 
 
      ```bash
      python3 -m pip install --user virtualenv
-     python -m venv ./.venv/discodiffusion
+     python -m venv .venv/discodiffusion
      source .venv/discodiffusion/bin/activate
      pip install -r requirements.txt
+     pip install git+https://github.com/facebookresearch/pytorch3d.git@stable
      ```
    
    - Test Run
