@@ -8,13 +8,13 @@ ENV PYTHONUNBUFFERED 1
 # Install a few dependencies
 RUN apt update
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install -y tzdata imagemagick
-
+RUN apt-get -y install ffmpeg
 # Create a disco user
 RUN useradd -ms /bin/bash disco
 USER disco
 
 ARG REPO=https://github.com/entmike/disco-diffusion-1.git
-ARG DD_VERSION=2.0.2
+ARG DD_VERSION=2.0.3
 
 COPY docker-requirements.txt docker-requirements.txt
 RUN pip install -r docker-requirements.txt

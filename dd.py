@@ -1219,13 +1219,14 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
             batchBar = tqdm(range(args.max_frames), ncols=40, dynamic_ncols=True, desc="Frames", position=0, leave=True)
             batchBar.n = frame_num
             batchBar.refresh()
-
+        target_image = None # test
         # Inits if not video frames
         if args.animation_mode != "Video Input":
             if args.init_image in ["", "None", "none", "NONE"]:
                 init_image = None
             else:
                 init_image = args.init_image
+                target_image = None     # Not supported in Video Input Mode
             init_scale = args.init_scale
             skip_steps = args.skip_steps
 
@@ -1348,6 +1349,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
             if not args.video_init_seed_continuity:
                 seed += 1
             init_image = f"{args.videoFramesFolder}/{frame_num+1:04}.jpg"
+            logger.debug(f"🎞️ Video Frame for init image: {init_image}")
             init_scale = args.frames_scale
             skip_steps = args.calc_frames_skip_steps
 
@@ -2039,9 +2041,12 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
                 f.unlink()
         except:
             logger.info("")
-        vf = f"select=not(mod(n\,{pargs.extract_nth_frame}))"
+        vf = f"select=not(mod(n\\,{pargs.extract_nth_frame}))"
+        ffmpeg_command = f"ffmpeg -i {pargs.video_init_path} -vf {vf} -vsync vfr -q:v 2 -loglevel error -stats {videoFramesFolder}/%04d.jpg"
+        logger.debug(ffmpeg_command)
+        logger.info(f"🎞️ Extracting frames from {pargs.video_init_path}...")
         subprocess.run(
-            f"ffmpeg -i {pargs.video_init_path} -vf f{vf} -vsync -vfr -q:v 2 -loglevel error -stats {videoFramesFolder}/%04d.jpg".split(" "), stdout=subprocess.PIPE
+            ffmpeg_command.split(" "), stdout=subprocess.PIPE
         ).stdout.decode("utf-8")
 
     # Insist turbo be used only w 3d anim.
