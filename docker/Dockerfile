@@ -9,7 +9,7 @@ ENV PYTHONUNBUFFERED 1
 RUN apt update
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install -y tzdata imagemagick
 RUN apt-get -y install ffmpeg
-RUN apt-get install zip unzip
+RUN apt-get -y install zip unzip
 # Create a disco user
 RUN useradd -ms /bin/bash disco
 USER disco
