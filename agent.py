@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 def loop(args=None):
     DD_URL = args.dd_url
     DD_NAME = args.agent
+    DD_IMAGES_OUT = args.images_out
     DD_CUDA_DEVICE = args.cuda_device
     POLL_INTERVAL = args.poll_interval
 
@@ -24,14 +25,14 @@ def loop(args=None):
                 prompt = json.dumps({0: [results["details"]["text_prompt"]]})
                 steps = results["details"]["steps"]
                 uuid = results["details"]["uuid"]
-                job = f"python disco.py --batch_name={uuid} --cuda_device={DD_CUDA_DEVICE} --n_batches=1 --images_out=/home/mike/ai/jobs --steps={steps} --text_prompts"
+                job = f"python disco.py --batch_name={uuid} --cuda_device={DD_CUDA_DEVICE} --n_batches=1 --images_out={DD_IMAGES_OUT} --steps={steps} --text_prompts"
                 cmd = job.split(" ")
                 cmd.append(f"{prompt}")
                 print(cmd)
                 # logger.info(f"Running...:\n{job}")
                 log = subprocess.run(cmd, stdout=subprocess.PIPE).stdout.decode("utf-8")
                 logger.info(log)
-                files = {"file": open(f"/home/mike/ai/jobs/{uuid}/{uuid}(0)_0.png", "rb")}
+                files = {"file": open(f"{DD_IMAGES_OUT}/{uuid}/{uuid}(0)_0.png", "rb")}
                 values = {}
                 r = requests.post(f"{DD_URL}/upload/{DD_NAME}/{uuid}", files=files, data=values)
             else:
@@ -52,6 +53,7 @@ def main():
     parser = argparse.ArgumentParser(description="Disco Diffusion")
     parser.add_argument("--dd_url", help="Discord Bot http endpoint", required=False, default=os.getenv("DD_URL"))
     parser.add_argument("--agent", help="Your agent name", required=False, default=os.getenv("DD_NAME"))
+    parser.add_argument("--images_out", help="Directory for render jobs", required=False, default=os.getenv("DD_IMAGES_OUT", "images_out"))
     parser.add_argument("--cuda_device", help="CUDA Device", required=False, default=os.getenv("DD_CUDA_DEVICE", "cuda:0"))
     parser.add_argument("--poll_interval", type=int, help="Polling interval between jobs", required=False, default=os.getenv("DD_POLL_INTERVAL", 5))
     args = parser.parse_args()
