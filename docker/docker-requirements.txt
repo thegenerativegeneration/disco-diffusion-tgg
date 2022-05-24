@@ -21,7 +21,7 @@ gdown
 argparse
 deepdiff
 twilio
-dotenv
+python-dotenv
 git+https://github.com/openai/CLIP
 git+https://github.com/ahupp/guided-diffusion@packagify
 git+https://github.com/ahupp/ResizeRight@packagify
