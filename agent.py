@@ -30,6 +30,7 @@ def loop(args=None):
                 shape = results["details"]["shape"]
                 model = results["details"]["model"]
                 clip_guidance_scale = results["details"]["clip_guidance_scale"]
+                cut_ic_pow = results["details"]["cut_ic_pow"]
                 w_h = [1280, 768]
                 RN101 = False
                 RN50 = True
@@ -43,6 +44,9 @@ def loop(args=None):
 
                 if not clip_guidance_scale:
                     clip_guidance_scale = 1500
+
+                if not cut_ic_pow:
+                    cut_ic_pow = 1
 
                 if not model:
                     model = "default"
@@ -70,7 +74,7 @@ def loop(args=None):
                     w_h = [1024, 1024]
                 if shape == "pano":
                     w_h = [2048, 512]
-                job = f"python disco.py --batch_name={uuid} --cuda_device={DD_CUDA_DEVICE} --n_batches=1 --images_out={DD_IMAGES_OUT} --steps={steps} --clip_guidance_scale={clip_guidance_scale} --text_prompts"
+                job = f"python disco.py --batch_name={uuid} --cuda_device={DD_CUDA_DEVICE} --n_batches=1 --images_out={DD_IMAGES_OUT} --steps={steps} --clip_guidance_scale={clip_guidance_scale} --cut_ic_pow={cut_ic_pow} --text_prompts"
                 cmd = job.split(" ")
                 cmd.append(f"{prompt}")
                 cmd.append(f"--width_height")
