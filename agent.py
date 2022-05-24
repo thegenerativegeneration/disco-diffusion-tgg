@@ -91,7 +91,7 @@ def loop(args=None):
                 cmd.append(str(ViTL14_336))
                 print(cmd)
                 logger.info(f"Running...:\n{job}")
-                log = subprocess.run(cmd).stdout.decode("utf-8")
+                log = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.decode("utf-8")
                 logger.info(log)
                 files = {"file": open(f"{DD_IMAGES_OUT}/{uuid}/{uuid}(0)_0.png", "rb")}
                 values = {}
