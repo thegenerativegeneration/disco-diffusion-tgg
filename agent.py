@@ -99,11 +99,12 @@ def loop(args=None):
                 cmd.append(str(ViTL14_336))
                 print(cmd)
                 logger.info(f"Running...:\n{job}")
-                log = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.decode("utf-8")
-                logger.info(log)
+                log = subprocess.run(cmd, stdout=subprocess.PIPE).stdout.decode("utf-8")
                 files = {"file": open(f"{DD_IMAGES_OUT}/{uuid}/{uuid}(0)_0.png", "rb")}
                 values = {}
                 r = requests.post(f"{DD_URL}/upload/{DD_NAME}/{uuid}", files=files, data=values)
+                files = {"file": open(f"{DD_IMAGES_OUT}/{uuid}/{uuid}(0).log", "rb")}
+                r = requests.post(f"{DD_URL}/uploadlog/{DD_NAME}/{uuid}", files=files, data=values)
             else:
                 logger.error(f"Error: {results['message']}")
         except KeyboardInterrupt:
