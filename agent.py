@@ -25,6 +25,8 @@ def loop(args=None):
             if results["success"]:
                 connected = True
                 prompt = json.dumps({0: [results["details"]["text_prompt"]]})
+                prompt.replace(":", "")
+                prompt.replace('"', "")
                 steps = results["details"]["steps"]
                 uuid = results["details"]["uuid"]
                 shape = results["details"]["shape"]
