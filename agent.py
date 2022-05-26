@@ -24,9 +24,10 @@ def loop(args=None):
             results = requests.get(url).json()
             if results["success"]:
                 connected = True
-                prompt = json.dumps({0: [results["details"]["text_prompt"]]})
-                prompt.replace(":", "")
-                prompt.replace('"', "")
+                tp = results["details"]["text_prompt"]
+                tp = tp.replace(":", "")
+                tp = tp.replace('"', "")
+                prompt = json.dumps({0: [tp]})
                 steps = results["details"]["steps"]
                 uuid = results["details"]["uuid"]
                 shape = results["details"]["shape"]
