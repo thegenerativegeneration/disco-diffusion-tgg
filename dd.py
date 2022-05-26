@@ -1219,14 +1219,14 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
             batchBar = tqdm(range(args.max_frames), ncols=40, dynamic_ncols=True, desc="Frames", position=0, leave=True)
             batchBar.n = frame_num
             batchBar.refresh()
-        target_image = None # test
+        target_image = None  # test
         # Inits if not video frames
         if args.animation_mode != "Video Input":
             if args.init_image in ["", "None", "none", "NONE"]:
                 init_image = None
             else:
                 init_image = args.init_image
-                target_image = None     # Not supported in Video Input Mode
+                target_image = None  # Not supported in Video Input Mode
             init_scale = args.init_scale
             skip_steps = args.skip_steps
 
@@ -2045,9 +2045,7 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         ffmpeg_command = f"ffmpeg -i {pargs.video_init_path} -vf {vf} -vsync vfr -q:v 2 -loglevel error -stats {videoFramesFolder}/%04d.jpg"
         logger.debug(ffmpeg_command)
         logger.info(f"🎞️ Extracting frames from {pargs.video_init_path}...")
-        subprocess.run(
-            ffmpeg_command.split(" "), stdout=subprocess.PIPE
-        ).stdout.decode("utf-8")
+        subprocess.run(ffmpeg_command.split(" "), stdout=subprocess.PIPE).stdout.decode("utf-8")
 
     # Insist turbo be used only w 3d anim.
     if pargs.animation_mode != "3D" and (pargs.turbo_mode or pargs.vr_mode):
@@ -2257,6 +2255,9 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         "init_generator": pargs.init_generator,
         "voronoi_points": pargs.voronoi_points,
         "voronoi_palette": pargs.voronoi_palette,
+        "dd_bot": pargs.dd_bot_url,
+        "dd_bot_url": pargs.dd_bot_url,
+        "dd_bot_agentname": pargs.dd_bot_agentname,
     }
     # args = SimpleNamespace(**args)
     args = pydot(args)  # Thx Zippy

@@ -1,29 +1,63 @@
-# https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel_22-03.html#rel_22-03
-
-FROM nvcr.io/nvidia/pytorch:22.03-py3
+FROM pytorch/pytorch
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+ENV DEBIAN_FRONTEND noninteractive\
+    SHELL=/bin/bash
+
 # Install a few dependencies
-RUN apt update
-RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install -y tzdata imagemagick
-RUN apt-get -y install ffmpeg
-RUN apt-get -y install zip unzip
+RUN apt-get update --yes && \
+    # - apt-get upgrade is run to patch known vulnerabilities in apt-get packages as
+    #   the ubuntu base image is rebuilt too seldom sometimes (less than once a month)
+    apt-get upgrade --yes && \
+    apt install --yes --no-install-recommends\
+    wget\
+    bash\
+    git\
+    make\
+    gcc-5\
+    g++-5\
+    build-essential\
+    tzdata\
+    imagemagick\
+    ffmpeg\
+    zip\
+    unzip\
+    openssh-server &&\
+    apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
+
+# Loosen up /workspace perms
+RUN chmod a+rw /workspace
+
 # Create a disco user
 RUN useradd -ms /bin/bash disco
 USER disco
 
 ARG REPO=https://github.com/entmike/disco-diffusion-1.git
-ARG DD_VERSION=2.0.3
+ARG DD_VERSION=2.1
 
-COPY docker-requirements.txt docker-requirements.txt
+ADD docker-requirements.txt docker-requirements.txt
+
 RUN pip install -r docker-requirements.txt
 
-# VOLUME "/workspace/disco-diffusion-1/models"
 ENV TORCH_HOME=/workspace/disco-diffusion-1/models
+
 # Clone Git repositories
 RUN git clone $REPO
+# VOLUME "/workspace/disco-diffusion-1/models"
 # VOLUME "/workspace/disco-diffusion-1/images_out"
 WORKDIR /workspace/disco-diffusion-1
-CMD [ "/bin/bash" ]
+RUN pip install jupyterlab
+RUN echo 'export PATH="$HOME/.local/bin:$HOME/.local/bin/jupyter-lab:$PATH"' >> ~/.bashrc
+RUN echo 'export SHELL=/bin/bash' >> ~/.bashrc
+USER root
+RUN pip install jupyterlab
+RUN echo 'export PATH="$HOME/.local/bin:$HOME/.local/bin/jupyter-lab:$PATH"' >> ~/.bashrc
+RUN echo 'export SHELL=/bin/bash' >> ~/.bashrc
+USER disco
+ADD start.sh /start.sh
+CMD [ "/start.sh" ]

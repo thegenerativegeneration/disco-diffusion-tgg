@@ -192,7 +192,9 @@ def parse(a=None):
     parser.add_argument("--twilio_to", help="Twilio SMS recipient", type=int, default=gp("twilio_to", None), required=False)
     parser.add_argument("--twilio_from", help="Twilio SMS sender", type=int, default=gp("twilio_from", None), required=False)
     parser.add_argument("--per_job_kills", help="Allow Control+C killing of single batches", type=str2bool, default=gp("per_job_kills", False), required=False)
-
+    parser.add_argument("--dd_bot", help="Enable DD Discord Bot mode", type=str2bool, default=gp("dd_bot", False), required=False)
+    parser.add_argument("--dd_bot_url", help="DD Discord Bot URL", default=gp("dd_bot_url", "http://your-bot.com:5000/"), required=False)
+    parser.add_argument("--dd_bot_agentname", help="DD Discord Bot Agent Name", default=gp("dd_bot_agentname", "james-bond"), required=False)
     parser.add_argument(
         "--gen_config",
         help="Generate initial configurations",
