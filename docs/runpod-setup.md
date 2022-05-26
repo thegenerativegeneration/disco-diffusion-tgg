@@ -26,6 +26,9 @@
 17. Click **Connect** and then click **Connect via HTTP**
 18. You will be prompted to enter your token/password.  Use the password you specified in **Step 10** above.
 19. You are now in Jupyter Notebook within the RunPod Docker Container `entmike/disco-diffusion-1`!  Things may look familiar to you.
+20. In JupyterLab, Click Terminal
+21. Do a test run with `python disco.py`
+22. Look at your pretty images in `images_out` start to develop.
 
 ## Commands
 
