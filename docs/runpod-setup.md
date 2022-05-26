@@ -14,7 +14,9 @@
 7. Next, click **Customize Deployment**
 8. For **Docker Image Name**, change to `entmike/disco-diffusion-1`
 9. For **Pod Name**, call it whatever you want.
-10. For **Docker Command**, change to `jupyter lab --NotebookApp.allow_origin="*" --NotebookApp.token=yourpassword`
+10. For **Docker Command**, change to `jupyter lab --NotebookApp.allow_origin="*" --NotebookApp.token=yourpasswordhere`
+    
+    (**Note:**  Change `yourpasswordhere` to something more secure.)
 11. For **Expose HTTP Port**, change to `8888`
 12. For **Expose TCP Port**, change to `80`
 13. Click **Ok**
