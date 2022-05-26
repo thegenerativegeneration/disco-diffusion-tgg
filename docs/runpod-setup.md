@@ -9,28 +9,31 @@
 2. Click 'Secure Cloud'
 3. You will be presented with different machine types.  Select the desired type, and click **Select**.
 4. Under **Select a Template**, choose **Custom Container**
-5. For **Container Disk**, leave at `40GB`
-6. For **Volume Disk**, leave at `40GB` (unless you are planning to render massive volumes)
-7. Next, click **Customize Deployment**
-8. For **Docker Image Name**, change to `entmike/disco-diffusion-1`
-9. For **Pod Name**, call it whatever you want.
-10. For **Docker Command**, change to `jupyter lab --NotebookApp.allow_origin="*" --NotebookApp.token=yourpasswordhere`
-    
-    (**Note:**  Change `yourpasswordhere` to something more secure.)
-11. For **Expose HTTP Port**, change to `8888`
-12. For **Expose TCP Port**, change to `80`
-13. Click **Ok**
-14. Click **Continue**
-15. Click **Deploy Spot** or **Deploy On-Demand** depending on your preference.
-16. A modal popup will appear, click **My Pods**
-17. Click **Connect** and then click **Connect via HTTP**
-18. You will be prompted to enter your token/password.  Use the password you specified in **Step 10** above.
-19. You are now in Jupyter Notebook within the RunPod Docker Container `entmike/disco-diffusion-1`!  Things may look familiar to you.
-20. In JupyterLab, Click Terminal
-21. Do a test run with `python disco.py`
-22. Look at your pretty images in `images_out` start to develop.
+5. Next, click **Customize Deployment**
+6. For **Docker Image Name**, change to `entmike/disco-diffusion-1`
+7. For **Pod Name**, call it whatever you want.
+8. At the bottom, expand **Environment Variables**, and set `JUPYTER_PASSWORD` to a password you want.
+9. For **Expose HTTP Port**, change to `8888`
+10. Click **Ok**
+11. Click **Continue**
+12. Click **Deploy Spot** or **Deploy On-Demand** depending on your preference.
+13. A modal popup will appear, click **My Pods**
+14. Click **Connect** and then click **Connect via HTTP**
+15. You will be prompted to enter your token/password.  Use the password you specified in **Step 8** above.
+16. You are now in Jupyter Notebook within the RunPod Docker Container `entmike/disco-diffusion-1`!  Things may look familiar to you.
+17. In JupyterLab, Click **Terminal**
+18. Do a test run with `python disco.py`
+19. Look at your pretty images in `images_out` start to develop.
 
-## Commands
+## Example Commands
+
+### Get Help
+
+`python disco.py --help`
+
+### Simple Command Line arguments run
+
+`python disco.py --steps 350 --batch_name=simple-example --text_prompts='{"0":["a pretty sailboat floating in the ocean in front of a colorful sunset, trending on artstation"]}'`
 
 ### Run a batch from YAML
 
