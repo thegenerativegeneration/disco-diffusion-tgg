@@ -10,7 +10,7 @@
 3. You will be presented with different machine types.  Select the desired type, and click **Select**.
 4. Under **Select a Template**, choose **Custom Container**
 5. For **Container Disk**, leave at `40GB`
-6. For **Volume Disk**, change to `50GB`
+6. For **Volume Disk**, leave at `40GB` (unless you are planning to render massive volumes)
 7. Next, click **Customize Deployment**
 8. For **Docker Image Name**, change to `entmike/disco-diffusion-1`
 9. For **Pod Name**, call it whatever you want.
