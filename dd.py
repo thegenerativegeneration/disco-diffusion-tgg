@@ -1683,7 +1683,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     if args.dd_bot:
                         r = requests.post(progress_url, data={"percent": percent})
                 except:
-                    logger.error("DD Bot error.  Continuing...")
+                    # logger.error("DD Bot error.  Continuing...")
                     pass
                 with image_display:
                     if j % args.display_rate == 0 or cur_t == -1 or intermediateStep == True:
