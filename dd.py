@@ -1045,6 +1045,7 @@ def processKeyFrameProperties(
 def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=None, folders=None):
     logger.info(f"💻 Starting Run: {args.batch_name}({batchNum}) at frame {start_frame}")
     progress_url = f"{args.dd_bot_url}/progress/{args.dd_bot_agentname}/{args.batch_name}"
+    print(args.dd_bot)
     if args.dd_bot:
         logger.info(f"Discord Bot mode enabled: {progress_url}")
     logger.info("Prepping models...")
@@ -1683,7 +1684,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     if args.dd_bot:
                         r = requests.post(progress_url, data={"percent": percent})
                 except:
-                    # logger.error("DD Bot error.  Continuing...")
+                    logger.error("DD Bot error.  Continuing...")
                     pass
                 with image_display:
                     if j % args.display_rate == 0 or cur_t == -1 or intermediateStep == True:
@@ -2266,7 +2267,7 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         "init_generator": pargs.init_generator,
         "voronoi_points": pargs.voronoi_points,
         "voronoi_palette": pargs.voronoi_palette,
-        "dd_bot": pargs.dd_bot_url,
+        "dd_bot": pargs.dd_bot,
         "dd_bot_url": pargs.dd_bot_url,
         "dd_bot_agentname": pargs.dd_bot_agentname,
     }
