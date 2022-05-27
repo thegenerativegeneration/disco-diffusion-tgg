@@ -1044,6 +1044,9 @@ def processKeyFrameProperties(
 
 def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=None, folders=None):
     logger.info(f"💻 Starting Run: {args.batch_name}({batchNum}) at frame {start_frame}")
+    progress_url = f"{args.dd_bot_url}/progress/{args.dd_bot_agentname}/{args.batch_name}"
+    if args.dd_bot:
+        logger.info(f"Discord Bot mode enabled: {progress_url}")
     logger.info("Prepping models...")
     model_config = model_and_diffusion_defaults()
     # Update Model Settings
@@ -1666,6 +1669,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     order=2,
                 )
 
+            # Diffuse Step
             for j, sample in enumerate(samples):
                 cur_t -= 1
                 intermediateStep = False
@@ -1674,6 +1678,13 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                         intermediateStep = True
                 elif j in args.intermediate_saves:
                     intermediateStep = True
+                percent = math.ceil(j / total_steps * 100)
+                try:
+                    if args.dd_bot:
+                        r = requests.post(progress_url, data={"percent": percent})
+                except:
+                    logger.error("DD Bot error.  Continuing...")
+                    pass
                 with image_display:
                     if j % args.display_rate == 0 or cur_t == -1 or intermediateStep == True:
                         for k, image in enumerate(sample["pred_xstart"]):

@@ -6,6 +6,7 @@ import json
 import argparse
 import os
 from dotenv import load_dotenv
+import time
 
 
 def loop(args=None):
@@ -24,6 +25,7 @@ def loop(args=None):
             results = requests.get(url).json()
             if results["success"]:
                 connected = True
+                print(results["details"])
                 tp = results["details"]["text_prompt"]
                 tp = tp.replace(":", "")
                 tp = tp.replace('"', "")
@@ -32,6 +34,7 @@ def loop(args=None):
                 uuid = results["details"]["uuid"]
                 shape = results["details"]["shape"]
                 model = results["details"]["model"]
+                clamp_max = results["details"]["clamp_max"]
                 clip_guidance_scale = results["details"]["clip_guidance_scale"]
                 cut_ic_pow = results["details"]["cut_ic_pow"]
                 w_h = [1280, 768]
@@ -44,6 +47,9 @@ def loop(args=None):
                 ViTB32 = True
                 ViTL14 = False
                 ViTL14_336 = False
+
+                if not clamp_max:
+                    clamp_max = 0.05
 
                 if not clip_guidance_scale:
                     clip_guidance_scale = 1500
@@ -77,7 +83,7 @@ def loop(args=None):
                     w_h = [1024, 1024]
                 if shape == "pano":
                     w_h = [2048, 512]
-                job = f"python disco.py --batch_name={uuid} --cuda_device={DD_CUDA_DEVICE} --n_batches=1 --images_out={DD_IMAGES_OUT} --steps={steps} --clip_guidance_scale={clip_guidance_scale} --cut_ic_pow={cut_ic_pow} --text_prompts"
+                job = f"python disco.py --dd_bot=true --dd_bot_url={DD_URL} --dd_bot_agentname={DD_NAME} --batch_name={uuid} --cuda_device={DD_CUDA_DEVICE} --n_batches=1 --images_out={DD_IMAGES_OUT} --steps={steps} --clamp_max={clamp_max} --clip_guidance_scale={clip_guidance_scale} --cut_ic_pow={cut_ic_pow} --text_prompts"
                 cmd = job.split(" ")
                 cmd.append(f"{prompt}")
                 cmd.append(f"--width_height")
@@ -102,9 +108,12 @@ def loop(args=None):
                 cmd.append(str(ViTL14_336))
                 print(cmd)
                 logger.info(f"Running...:\n{job}")
+                s = time.time()
                 log = subprocess.run(cmd, stdout=subprocess.PIPE).stdout.decode("utf-8")
+                e = time.time()
+                duration = e - s
                 files = {"file": open(f"{DD_IMAGES_OUT}/{uuid}/{uuid}(0)_0.png", "rb")}
-                values = {}
+                values = {"duration": duration}
                 r = requests.post(f"{DD_URL}/upload/{DD_NAME}/{uuid}", files=files, data=values)
                 files = {"file": open(f"{DD_IMAGES_OUT}/{uuid}/{uuid}(0).log", "rb")}
                 r = requests.post(f"{DD_URL}/uploadlog/{DD_NAME}/{uuid}", files=files, data=values)
