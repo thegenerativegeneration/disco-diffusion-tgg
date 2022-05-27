@@ -15,15 +15,16 @@ def loop(args=None):
     DD_IMAGES_OUT = args.images_out
     DD_CUDA_DEVICE = args.cuda_device
     POLL_INTERVAL = args.poll_interval
-
-    url = f"{DD_URL}/takeorder/{DD_NAME}"
+    idle_time = 0
     run = True
     while run == True:
         connected = False
+        url = f"{DD_URL}/takeorder/{DD_NAME}/{idle_time}"
         try:
             logger.debug(f"🌎 Checking '{url}'")
             results = requests.get(url).json()
             if results["success"]:
+                idle_time = 0
                 connected = True
                 print(results["details"])
                 tp = results["details"]["text_prompt"]
@@ -118,7 +119,7 @@ def loop(args=None):
                 files = {"file": open(f"{DD_IMAGES_OUT}/{uuid}/{uuid}(0).log", "rb")}
                 r = requests.post(f"{DD_URL}/uploadlog/{DD_NAME}/{uuid}", files=files, data=values)
             else:
-                logger.error(f"Error: {results['message']}")
+                logger.info(f"{results['message']}")
         except KeyboardInterrupt:
             logger.info("Exiting...")
             run = False
@@ -130,7 +131,8 @@ def loop(args=None):
             else:
                 logger.error(f"Error.  Check your DD_URL and if the DD app is running at that location.  Also check your own internet connectivity.  Exception:\n{e}")
         finally:
-            logger.info(f"Sleeping for {POLL_INTERVAL} seconds...")
+            logger.info(f"Sleeping for {POLL_INTERVAL} seconds...  I've been sleeping for {idle_time} seconds.")
+            idle_time = idle_time + POLL_INTERVAL
             sleep(POLL_INTERVAL)
 
 
