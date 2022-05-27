@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /workspace/diffusion-diffusion-1
+cd /workspace/disco-diffusion-1
 git pull
 
 if [[ $PUBLIC_KEY ]]
