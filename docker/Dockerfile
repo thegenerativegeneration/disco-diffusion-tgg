@@ -47,6 +47,7 @@ RUN pip install -r docker-requirements.txt
 ENV TORCH_HOME=/workspace/disco-diffusion-1/models
 
 # Clone Git repositories
+ENV BUILDDATE=May27
 RUN git clone $REPO
 WORKDIR /workspace/disco-diffusion-1
 RUN pip install jupyterlab

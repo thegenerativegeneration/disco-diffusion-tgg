@@ -12,6 +12,8 @@
 
 
 ## Changes/Enhancements
+- **May 28, 2022**
+  - Turbo Mode after frame 10 fixed.  (https://github.com/entmike/disco-diffusion-1/issues/8)
 - **May 20, 2022**
   - Voronoi Diagram introduced as an alternative to perlin noise and init_image as a starting point.  To use, set `init_generator` to `voronoi` (Default is `perlin` to honor default noise behavior)  `voronoi_points` controls how many regions the voronoi procedure creates.  You can also optionally control the palette by specifying a different file in `voronoi_palette`.  Refer to the 2 example yaml files in the new `palettes` folder.  There are currently two modes (`generated` and `static`.)  For static, you specify all your values in the yaml file as in the example in `static.yaml`.  For randomly generated color ranges, refer to `default.yaml` to see how you can control what random color hue ranges will be picked.
   - Other minor bug fixes and code cleanup.
