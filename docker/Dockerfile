@@ -48,16 +48,12 @@ ENV TORCH_HOME=/workspace/disco-diffusion-1/models
 
 # Clone Git repositories
 RUN git clone $REPO
-# VOLUME "/workspace/disco-diffusion-1/models"
-# VOLUME "/workspace/disco-diffusion-1/images_out"
 WORKDIR /workspace/disco-diffusion-1
 RUN pip install jupyterlab
 RUN echo 'export PATH="$HOME/.local/bin:$HOME/.local/bin/jupyter-lab:$PATH"' >> ~/.bashrc
-RUN echo 'export SHELL=/bin/bash' >> ~/.bashrc
 USER root
 RUN pip install jupyterlab
 RUN echo 'export PATH="$HOME/.local/bin:$HOME/.local/bin/jupyter-lab:$PATH"' >> ~/.bashrc
-RUN echo 'export SHELL=/bin/bash' >> ~/.bashrc
 USER disco
 ADD start.sh /start.sh
 CMD [ "/start.sh" ]
