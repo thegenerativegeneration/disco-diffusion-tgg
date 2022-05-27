@@ -1320,7 +1320,24 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                         next_step_pil.save("oldFrameScaled.png")  # stash for later blending
                     elif frame_num > args.turbo_preroll:
                         # set up 2 warped image sequences, old & new, to blend toward new diff image
-                        old_frame = do_3d_step("oldFrameScaled.png", frame_num, midas_model, midas_transform)
+                        old_frame = do_3d_step(
+                            "oldFrameScaled.png",
+                            frame_num,
+                            midas_model,
+                            midas_transform,
+                            translations=pydot(
+                                {
+                                    "angle_series": angle_series,
+                                    "zoom_series": zoom_series,
+                                    "translation_x_series": translation_x_series,
+                                    "translation_y_series": translation_y_series,
+                                    "translation_z_series": translation_z_series,
+                                    "rotation_3d_x_series": rotation_3d_x_series,
+                                    "rotation_3d_y_series": rotation_3d_y_series,
+                                    "rotation_3d_z_series": rotation_3d_z_series,
+                                }
+                            ),
+                        )
                         old_frame.save("oldFrameScaled.png")
                         if frame_num % int(args.turbo_steps) != 0:
                             logger.info("turbo skip this frame: skipping clip diffusion steps")
