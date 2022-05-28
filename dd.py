@@ -976,7 +976,7 @@ def get_inbetweens(key_frames, integer=False, max_frames=None, interp_spline=Non
 def split_prompts(prompts, max_frames=None):
     prompt_series = pd.Series([np.nan for a in range(max_frames)])
     for i, prompt in prompts.items():
-        prompt_series[i] = prompt
+        prompt_series[int(i)] = prompt
     # prompt_series = prompt_series.astype(str)
     prompt_series = prompt_series.ffill().bfill()
     return prompt_series
