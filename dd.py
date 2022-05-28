@@ -496,14 +496,8 @@ def do_3d_step(
         rotation_3d_x = translations.rotation_3d_x_series[frame_num]
         rotation_3d_y = translations.rotation_3d_y_series[frame_num]
         rotation_3d_z = translations.rotation_3d_z_series[frame_num]
-        logger.info(
-            f"translation_x: {translation_x}",
-            f"translation_y: {translation_y}",
-            f"translation_z: {translation_z}",
-            f"rotation_3d_x: {rotation_3d_x}",
-            f"rotation_3d_y: {rotation_3d_y}",
-            f"rotation_3d_z: {rotation_3d_z}",
-        )
+        logger.info(f"translation: [{translation_x}, {translation_y}, {translation_z}]")
+        logger.info(f"rotation_3d: [{rotation_3d_x}, {rotation_3d_y}, {rotation_3d_z}]")
 
     translate_xyz = [
         -translation_x * TRANSLATION_SCALE,
@@ -511,8 +505,8 @@ def do_3d_step(
         -translation_z * TRANSLATION_SCALE,
     ]
     rotate_xyz_degrees = [rotation_3d_x, rotation_3d_y, rotation_3d_z]
-    logger.info("translation:", translate_xyz)
-    logger.info("rotation:", rotate_xyz_degrees)
+    logger.info(f"translation: {translate_xyz}")
+    logger.info(f"rotation:    {rotate_xyz_degrees}")
     rotate_xyz = [
         math.radians(rotate_xyz_degrees[0]),
         math.radians(rotate_xyz_degrees[1]),
