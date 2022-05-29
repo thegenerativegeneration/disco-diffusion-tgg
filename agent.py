@@ -38,6 +38,7 @@ def loop(args=None):
                 clamp_max = results["details"]["clamp_max"]
                 clip_guidance_scale = results["details"]["clip_guidance_scale"]
                 cut_ic_pow = results["details"]["cut_ic_pow"]
+                sat_scale = results["details"]["sat_scale"]
                 w_h = [1280, 768]
                 RN101 = False
                 RN50 = True
@@ -57,6 +58,9 @@ def loop(args=None):
 
                 if not cut_ic_pow:
                     cut_ic_pow = 1
+
+                if not sat_scale:
+                    sat_scale = 0
 
                 if not model:
                     model = "default"
@@ -84,7 +88,7 @@ def loop(args=None):
                     w_h = [1024, 1024]
                 if shape == "pano":
                     w_h = [2048, 512]
-                job = f"python disco.py --dd_bot=true --dd_bot_url={DD_URL} --dd_bot_agentname={DD_NAME} --batch_name={uuid} --cuda_device={DD_CUDA_DEVICE} --n_batches=1 --images_out={DD_IMAGES_OUT} --steps={steps} --clamp_max={clamp_max} --clip_guidance_scale={clip_guidance_scale} --cut_ic_pow={cut_ic_pow} --text_prompts"
+                job = f"python disco.py --dd_bot=true --dd_bot_url={DD_URL} --dd_bot_agentname={DD_NAME} --batch_name={uuid} --cuda_device={DD_CUDA_DEVICE} --n_batches=1 --images_out={DD_IMAGES_OUT} --steps={steps} --clamp_max={clamp_max} --clip_guidance_scale={clip_guidance_scale} --cut_ic_pow={cut_ic_pow} --sat_scale={sat_scale} --text_prompts"
                 cmd = job.split(" ")
                 cmd.append(f"{prompt}")
                 cmd.append(f"--width_height")
