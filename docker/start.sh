@@ -19,7 +19,7 @@ then
     cd /
     jupyter lab --allow-root --no-browser --port=8888 --ip=* \
         --ServerApp.terminado_settings='{"shell_command":["/bin/bash"]}' \
-        --ServerApp.token=$JUPYTER_PASSWORD --ServerApp.allow_origin=* --ServerApp.preferred_dir=/workspace/disco-diffusion-1 &
+        --ServerApp.token=$JUPYTER_PASSWORD --ServerApp.allow_origin=* --ServerApp.preferred_dir=/workspace/disco-diffusion-1
     echo "Jupyter Lab Started"
     sleep infinity
 fi
