@@ -38,7 +38,7 @@ RUN useradd -ms /bin/bash disco
 USER disco
 
 ARG REPO=https://github.com/entmike/disco-diffusion-1.git
-ARG DD_VERSION=2.1
+ARG DD_VERSION=2.2
 
 ADD docker-requirements.txt docker-requirements.txt
 
