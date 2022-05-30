@@ -496,14 +496,8 @@ def do_3d_step(
         rotation_3d_x = translations.rotation_3d_x_series[frame_num]
         rotation_3d_y = translations.rotation_3d_y_series[frame_num]
         rotation_3d_z = translations.rotation_3d_z_series[frame_num]
-        logger.info(
-            f"translation_x: {translation_x}",
-            f"translation_y: {translation_y}",
-            f"translation_z: {translation_z}",
-            f"rotation_3d_x: {rotation_3d_x}",
-            f"rotation_3d_y: {rotation_3d_y}",
-            f"rotation_3d_z: {rotation_3d_z}",
-        )
+        logger.info(f"translation: [{translation_x}, {translation_y}, {translation_z}]")
+        logger.info(f"rotation_3d: [{rotation_3d_x}, {rotation_3d_y}, {rotation_3d_z}]")
 
     translate_xyz = [
         -translation_x * TRANSLATION_SCALE,
@@ -511,8 +505,8 @@ def do_3d_step(
         -translation_z * TRANSLATION_SCALE,
     ]
     rotate_xyz_degrees = [rotation_3d_x, rotation_3d_y, rotation_3d_z]
-    logger.info("translation:", translate_xyz)
-    logger.info("rotation:", rotate_xyz_degrees)
+    logger.info(f"translation: {translate_xyz}")
+    logger.info(f"rotation:    {rotate_xyz_degrees}")
     rotate_xyz = [
         math.radians(rotate_xyz_degrees[0]),
         math.radians(rotate_xyz_degrees[1]),
@@ -976,7 +970,7 @@ def get_inbetweens(key_frames, integer=False, max_frames=None, interp_spline=Non
 def split_prompts(prompts, max_frames=None):
     prompt_series = pd.Series([np.nan for a in range(max_frames)])
     for i, prompt in prompts.items():
-        prompt_series[i] = prompt
+        prompt_series[int(i)] = prompt
     # prompt_series = prompt_series.astype(str)
     prompt_series = prompt_series.ffill().bfill()
     return prompt_series
@@ -1275,8 +1269,8 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     borderMode=cv2.BORDER_WRAP,
                 )
 
-                cv2.imwrite("prevFrameScaled.png", img_0)
-                init_image = "prevFrameScaled.png"
+                cv2.imwrite(f"{args.batchFolder}/prevFrameScaled.png", img_0)
+                init_image = f"{args.batchFolder}/prevFrameScaled.png"
                 init_scale = args.frames_scale
                 skip_steps = args.calc_frames_skip_steps
 
@@ -1286,7 +1280,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                 if args.resume_run and frame_num == args.start_frame:
                     img_filepath = args.batchFolder + f"/{args.batch_name}({args.batchNum})_{args.start_frame-1:04}.png"
                     if args.turbo_mode and frame_num > args.turbo_preroll:
-                        shutil.copyfile(img_filepath, "oldFrameScaled.png")
+                        shutil.copyfile(img_filepath, f"{args.batchFolder}/oldFrameScaled.png")
                 else:
                     # img_filepath = "/content/prevFrame.png" if is_colab else "prevFrame.png"
                     img_filepath = f"{args.batchFolder}/prevFrame.png"
@@ -1312,22 +1306,28 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     TRANSLATION_SCALE=args.TRANSLATION_SCALE,
                     args=args,
                 )
-                next_step_pil.save("prevFrameScaled.png")
+                next_step_pil.save(f"{args.batchFolder}/prevFrameScaled.png")
 
                 ### Turbo mode - skip some diffusions, use 3d morph for clarity and to save time
                 if args.turbo_mode:
                     if frame_num == args.turbo_preroll:  # start tracking oldframe
-                        next_step_pil.save("oldFrameScaled.png")  # stash for later blending
+                        next_step_pil.save(f"{args.batchFolder}/oldFrameScaled.png")  # stash for later blending
                     elif frame_num > args.turbo_preroll:
                         # set up 2 warped image sequences, old & new, to blend toward new diff image
                         old_frame = do_3d_step(
-                            "oldFrameScaled.png",
+                            f"{args.batchFolder}/oldFrameScaled.png",
                             frame_num,
                             midas_model,
                             midas_transform,
+<<<<<<< HEAD
                             TRANSLATION_SCALE=args.TRANSLATION_SCALE,
                             args=args,
                             device=device,
+=======
+                            TRANSLATION_SCALE=args.TRANSLATION_SCALE,
+                            args=args,
+                            device=device,
+>>>>>>> b5a4d1984cfb9960c09e37fa87a5774983e089a6
                             translations=pydot(
                                 {
                                     "angle_series": angle_series,
@@ -1341,14 +1341,14 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                                 }
                             ),
                         )
-                        old_frame.save("oldFrameScaled.png")
+                        old_frame.save(f"{args.batchFolder}/oldFrameScaled.png")
                         if frame_num % int(args.turbo_steps) != 0:
                             logger.info("turbo skip this frame: skipping clip diffusion steps")
                             filename = f"{args.batch_name}({args.batchNum})_{frame_num:04}.png"
                             blend_factor = ((frame_num % int(args.turbo_steps)) + 1) / int(args.turbo_steps)
                             logger.info("turbo skip this frame: skipping clip diffusion steps and saving blended frame")
-                            newWarpedImg = cv2.imread("prevFrameScaled.png")  # this is already updated..
-                            oldWarpedImg = cv2.imread("oldFrameScaled.png")
+                            newWarpedImg = cv2.imread(f"{args.batchFolder}/prevFrameScaled.png")  # this is already updated..
+                            oldWarpedImg = cv2.imread(f"{args.batchFolder}/oldFrameScaled.png")
                             blendedImage = cv2.addWeighted(
                                 newWarpedImg,
                                 blend_factor,
@@ -1361,11 +1361,11 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                             continue
                         else:
                             # if not a skip frame, will run diffusion and need to blend.
-                            oldWarpedImg = cv2.imread("prevFrameScaled.png")
-                            cv2.imwrite(f"oldFrameScaled.png", oldWarpedImg)  # swap in for blending later
+                            oldWarpedImg = cv2.imread(f"{args.batchFolder}/prevFrameScaled.png")
+                            cv2.imwrite(f"{args.batchFolder}/oldFrameScaled.png", oldWarpedImg)  # swap in for blending later
                             logger.info("clip/diff this frame - generate clip diff image")
 
-                init_image = "prevFrameScaled.png"
+                init_image = f"{args.batchFolder}/prevFrameScaled.png"
                 init_scale = args.frames_scale
                 skip_steps = args.calc_frames_skip_steps
 

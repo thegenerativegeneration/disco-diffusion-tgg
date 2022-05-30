@@ -39,6 +39,7 @@ def loop(args=None):
                 clip_guidance_scale = results["details"]["clip_guidance_scale"]
                 cut_ic_pow = results["details"]["cut_ic_pow"]
                 sat_scale = results["details"]["sat_scale"]
+                print(results["details"])
                 w_h = [1280, 768]
                 RN101 = False
                 RN50 = True
