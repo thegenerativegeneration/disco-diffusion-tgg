@@ -1319,15 +1319,9 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                             frame_num,
                             midas_model,
                             midas_transform,
-<<<<<<< HEAD
                             TRANSLATION_SCALE=args.TRANSLATION_SCALE,
                             args=args,
                             device=device,
-=======
-                            TRANSLATION_SCALE=args.TRANSLATION_SCALE,
-                            args=args,
-                            device=device,
->>>>>>> b5a4d1984cfb9960c09e37fa87a5774983e089a6
                             translations=pydot(
                                 {
                                     "angle_series": angle_series,
