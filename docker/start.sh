@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "Container Started"
+
 cd /workspace/disco-diffusion-1
 git pull
 
@@ -12,6 +14,7 @@ then
     chmod 700 -R ~/.ssh
     cd /
     service ssh start
+    echo "SSH Service Started"
 fi
 
 if [[ $JUPYTER_PASSWORD ]]
@@ -21,7 +24,6 @@ then
         --ServerApp.terminado_settings='{"shell_command":["/bin/bash"]}' \
         --ServerApp.token=$JUPYTER_PASSWORD --ServerApp.allow_origin=* --ServerApp.preferred_dir=/workspace/disco-diffusion-1
     echo "Jupyter Lab Started"
+else
     sleep infinity
 fi
-
-/bin/bash
