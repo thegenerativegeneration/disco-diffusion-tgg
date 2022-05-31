@@ -28,6 +28,8 @@ def loop(args=None):
                 connected = True
                 print(results["details"])
                 tp = results["details"]["text_prompt"]
+                tp = tp.replace("“", '"')
+                tp = tp.replace("”", '"')
                 # Attempt to accept JSON Structured Text Prompt...
                 try:
                     tp = eval(tp)
@@ -99,6 +101,16 @@ def loop(args=None):
                     w_h = [1024, 1024]
                 if shape == "pano":
                     w_h = [2048, 512]
+
+                if shape == "landscape_sm":
+                    w_h = [640, 512]
+                if shape == "portrait_sm":
+                    w_h = [512, 640]
+                if shape == "square_sm":
+                    w_h = [512, 512]
+                if shape == "pano_sm":
+                    w_h = [1024, 256]
+
                 job = f"python disco.py --dd_bot=true --dd_bot_url={DD_URL} --dd_bot_agentname={DD_NAME} --batch_name={uuid} --cuda_device={DD_CUDA_DEVICE} --n_batches=1 --images_out={DD_IMAGES_OUT} --steps={steps} --clamp_max={clamp_max} --clip_guidance_scale={clip_guidance_scale} --cut_ic_pow={cut_ic_pow} --sat_scale={sat_scale} --text_prompts"
                 cmd = job.split(" ")
                 cmd.append(f"{prompt}")
