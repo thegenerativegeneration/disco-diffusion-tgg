@@ -28,9 +28,19 @@ def loop(args=None):
                 connected = True
                 print(results["details"])
                 tp = results["details"]["text_prompt"]
-                tp = tp.replace(":", "")
-                tp = tp.replace('"', "")
-                prompt = json.dumps({0: [tp]})
+                # Attempt to accept JSON Structured Text Prompt...
+                try:
+                    tp = eval(tp)
+                    if type(tp) == list:
+                        prompt = json.dumps({0: tp})
+                        logger.info("JSON structured text prompt found.")
+                    else:
+                        raise Exception("Non-list item found")
+                except:
+                    tp = tp.replace(":", "")
+                    tp = tp.replace('"', "")
+                    prompt = json.dumps({0: [tp]})
+                    logger.info("Flat string text prompt found.")
                 steps = results["details"]["steps"]
                 uuid = results["details"]["uuid"]
                 shape = results["details"]["shape"]
