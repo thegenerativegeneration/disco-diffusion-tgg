@@ -39,6 +39,7 @@ def loop(args=None):
                     else:
                         raise Exception("Non-list item found")
                 except:
+                    tp = results["details"]["text_prompt"]
                     tp = tp.replace(":", "")
                     tp = tp.replace('"', "")
                     prompt = json.dumps({0: [tp]})
