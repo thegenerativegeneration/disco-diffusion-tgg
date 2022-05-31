@@ -52,6 +52,11 @@ def loop(args=None):
                 clip_guidance_scale = results["details"]["clip_guidance_scale"]
                 cut_ic_pow = results["details"]["cut_ic_pow"]
                 sat_scale = results["details"]["sat_scale"]
+                try:
+                    render_type = results["details"]["render_type"]
+                except:
+                    render_type = "render"
+
                 print(results["details"])
                 w_h = [1280, 768]
                 RN101 = False
@@ -92,25 +97,26 @@ def loop(args=None):
                     ViTL14_336 = True
 
                 if not shape:
-                    shape = "landcape"
+                    shape = "landscape"
 
-                if shape == "landscape":
-                    w_h = [1280, 768]
-                if shape == "portrait":
-                    w_h = [768, 1280]
-                if shape == "square":
-                    w_h = [1024, 1024]
-                if shape == "pano":
-                    w_h = [2048, 512]
-
-                if shape == "landscape_sm":
-                    w_h = [640, 512]
-                if shape == "portrait_sm":
-                    w_h = [512, 640]
-                if shape == "square_sm":
-                    w_h = [512, 512]
-                if shape == "pano_sm":
-                    w_h = [1024, 256]
+                if render_type == "sketch":
+                    if shape == "landscape":
+                        w_h = [640, 512]
+                    if shape == "portrait":
+                        w_h = [512, 640]
+                    if shape == "square":
+                        w_h = [512, 512]
+                    if shape == "pano":
+                        w_h = [1024, 256]
+                else:
+                    if shape == "landscape":
+                        w_h = [1280, 768]
+                    if shape == "portrait":
+                        w_h = [768, 1280]
+                    if shape == "square":
+                        w_h = [1024, 1024]
+                    if shape == "pano":
+                        w_h = [2048, 512]
 
                 job = f"python disco.py --dd_bot=true --dd_bot_url={DD_URL} --dd_bot_agentname={DD_NAME} --batch_name={uuid} --cuda_device={DD_CUDA_DEVICE} --n_batches=1 --images_out={DD_IMAGES_OUT} --steps={steps} --clamp_max={clamp_max} --clip_guidance_scale={clip_guidance_scale} --cut_ic_pow={cut_ic_pow} --sat_scale={sat_scale} --text_prompts"
                 cmd = job.split(" ")
