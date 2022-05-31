@@ -62,6 +62,9 @@ def loop(args=None):
                 except:
                     set_seed = "random_seed"
 
+                if set_seed == -1:
+                    set_seed = "random_seed"
+
                 print(results["details"])
                 w_h = [1280, 768]
                 RN101 = False
