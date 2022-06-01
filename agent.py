@@ -1,3 +1,4 @@
+import math
 from pkgutil import extend_path
 import subprocess
 from time import sleep
@@ -62,6 +63,14 @@ def loop(args=None):
                     set_seed = results["details"]["set_seed"]
                 except:
                     set_seed = "random_seed"
+                try:
+                    symmetry = results["details"]["symmetry"]
+                except:
+                    symmetry = "no"
+                try:
+                    symmetry_loss_scale = results["details"]["symmetry_loss_scale"]
+                except:
+                    symmetry_loss_scale = 1500
 
                 if set_seed == -1:
                     set_seed = "random_seed"
@@ -150,6 +159,13 @@ def loop(args=None):
                 cmd.append(str(ViTL14))
                 cmd.append(f"--ViTL14_336")
                 cmd.append(str(ViTL14_336))
+                if symmetry == "yes":
+                    cmd.append(f"--symmetry_loss")
+                    cmd.append(str(True))
+                    cmd.append(f"--symmetry_switch")
+                    cmd.append(str(math.floor(int(steps) / 2)))
+                    cmd.append(f"--symmetry_loss_scale")
+                    cmd.append(str(symmetry_loss_scale))
                 print(cmd)
                 logger.info(f"Running...:\n{job}")
                 s = time.time()
