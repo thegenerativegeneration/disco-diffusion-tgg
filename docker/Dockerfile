@@ -45,9 +45,10 @@ ADD docker-requirements.txt docker-requirements.txt
 RUN pip install -r docker-requirements.txt
 
 ENV TORCH_HOME=/workspace/disco-diffusion-1/models
-
+ADD welcome-banner.txt /home/disco/welcome-banner.txt
+RUN echo 'cat ~/welcome-banner.txt' >> ~/.bashrc
 # Clone Git repositories
-ENV BUILDDATE=May31
+ENV BUILDDATE=June1
 RUN git clone $REPO
 WORKDIR /workspace/disco-diffusion-1
 RUN pip install jupyterlab
