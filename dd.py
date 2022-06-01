@@ -1039,6 +1039,7 @@ def processKeyFrameProperties(
 def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=None, folders=None):
     logger.info(f"💻 Starting Run: {args.batch_name}({batchNum}) at frame {start_frame}")
     progress_url = f"{args.dd_bot_url}/progress/{args.dd_bot_agentname}/{args.batch_name}"
+    preview_url = f"{args.dd_bot_url}/preview/{args.dd_bot_agentname}/{args.batch_name}"
     print(args.dd_bot)
     if args.dd_bot:
         logger.info(f"Discord Bot mode enabled: {progress_url}")
@@ -1722,6 +1723,14 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                             if j % args.display_rate == 0 or cur_t == -1:
                                 # image.save('progress.png')
                                 image.save(f"{args.batchFolder}/progress.png")
+                                try:
+                                    if args.dd_bot:
+                                        files = {"file": open(f"{args.batchFolder}/progress.png", "rb")}
+                                        logger.info("Uploaded progress.png...")
+                                        r = requests.post(preview_url, files=files)
+                                except:
+                                    logger.error("DD Bot error.  Continuing...")
+                                    pass
                                 # prints output on console.
                                 if is_in_notebook():
                                     display.clear_output(wait=True)

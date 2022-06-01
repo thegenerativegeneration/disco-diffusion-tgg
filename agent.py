@@ -8,6 +8,7 @@ import argparse
 import os
 from dotenv import load_dotenv
 import time
+import traceback
 
 
 def loop(args=None):
@@ -126,7 +127,7 @@ def loop(args=None):
                     if shape == "pano":
                         w_h = [2048, 512]
 
-                job = f"python disco.py --dd_bot=true --dd_bot_url={DD_URL} --dd_bot_agentname={DD_NAME} --batch_name={uuid} --set_seed={set_seed} --cuda_device={DD_CUDA_DEVICE} --n_batches=1 --images_out={DD_IMAGES_OUT} --steps={steps} --clamp_max={clamp_max} --clip_guidance_scale={clip_guidance_scale} --cut_ic_pow={cut_ic_pow} --sat_scale={sat_scale} --text_prompts"
+                job = f"python disco.py --dd_bot=true --dd_bot_url={DD_URL} --dd_bot_agentname={DD_NAME} --batch_name={uuid} --display_rate=5 --set_seed={set_seed} --cuda_device={DD_CUDA_DEVICE} --n_batches=1 --images_out={DD_IMAGES_OUT} --steps={steps} --clamp_max={clamp_max} --clip_guidance_scale={clip_guidance_scale} --cut_ic_pow={cut_ic_pow} --sat_scale={sat_scale} --text_prompts"
                 cmd = job.split(" ")
                 cmd.append(f"{prompt}")
                 cmd.append(f"--width_height")
@@ -167,8 +168,9 @@ def loop(args=None):
             run = False
         except Exception as e:
             if connected:
+                tb = traceback.format_exc()
                 logger.error(f"Bad job detected.\n\n{e}")
-                values = {"message": f"Job failed:\n\n{e}"}
+                values = {"message": f"Job failed:\n\n{e}", "traceback": tb}
                 r = requests.post(f"{DD_URL}/reject/{DD_NAME}/{uuid}", data=values)
             else:
                 logger.error(f"Error.  Check your DD_URL and if the DD app is running at that location.  Also check your own internet connectivity.  Exception:\n{e}")
