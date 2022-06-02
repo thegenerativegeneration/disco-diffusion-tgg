@@ -190,9 +190,9 @@ def loop(args=None):
                     cmd.append(f"--symmetry_loss_scale")
                     cmd.append(str(symmetry_loss_scale))
                 if cut_schedule != "default":
-                    cmd.append("cut_overview")
+                    cmd.append("--cut_overview")
                     cmd.append("[10]200+[8]200+[6]200+[4]200+[2]200")
-                    cmd.append("cut_innercut")
+                    cmd.append("--cut_innercut")
                     cmd.append("[2]200+[2]200+[8]200+[8]200+[10]200")
                 print(cmd)
                 logger.info(f"Running...:\n{job}")
