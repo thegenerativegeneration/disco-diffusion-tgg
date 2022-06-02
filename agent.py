@@ -121,24 +121,24 @@ def loop(args=None):
                 if not shape:
                     shape = "landscape"
 
-                cut_overview = "'[12]*400+[4]*600'"
-                cut_innercut = "'[4]*400+[12]*600'"
+                cut_overview = "[12]*400+[4]*600"
+                cut_innercut = "[4]*400+[12]*600"
 
                 if cut_schedule == "default":
-                    cut_overview = "'[12]*400+[4]*600'"
-                    cut_innercut = "'[4]*400+[12]*600'"
+                    cut_overview = "[12]*400+[4]*600"
+                    cut_innercut = "[4]*400+[12]*600"
 
                 if cut_schedule == "detailed-a":
-                    cut_overview = "'[10]200+[8]200+[6]200+[2]200+[2]200'"
-                    cut_innercut = "'[0]200+[2]200+[6]200+[8]200+[10]200'"
+                    cut_overview = "[10]200+[8]200+[6]200+[2]200+[2]200"
+                    cut_innercut = "[0]200+[2]200+[6]200+[8]200+[10]200"
 
                 if cut_schedule == "detailed-b":
-                    cut_overview = "'[10]200+[8]200+[6]200+[4]200+[2]200'"
-                    cut_innercut = "'[2]200+[2]200+[8]200+[8]200+[10]200'"
+                    cut_overview = "[10]200+[8]200+[6]200+[4]200+[2]200"
+                    cut_innercut = "[2]200+[2]200+[8]200+[8]200+[10]200"
 
                 if cut_schedule == "ram_efficient":
-                    cut_overview = "'[10]200+[8]200+[5]200+[2]200+[2]200'"
-                    cut_innercut = "'[0]200+[2]200+[5]200+[7]200+[9]200'"
+                    cut_overview = "[10]200+[8]200+[5]200+[2]200+[2]200"
+                    cut_innercut = "[0]200+[2]200+[5]200+[7]200+[9]200"
 
                 if render_type == "sketch":
                     if shape == "landscape":
