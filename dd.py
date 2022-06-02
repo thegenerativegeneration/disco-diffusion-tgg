@@ -1698,9 +1698,12 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     percent = math.ceil(j / total_steps * 100)
                     try:
                         if args.dd_bot:
-                            r = requests.post(progress_url, data={"percent": percent})
-                    except:
-                        logger.error("DD Bot error.  Continuing...")
+                            cd = device
+                            smi = f"nvidia-smi --query-gpu=gpu_name,temperature.gpu,utilization.gpu,utilization.memory,memory.used --format=csv,noheader,nounits -i {str(device).split(':')[1]}"
+                            gpustats = subprocess.run(smi.split(" "), stdout=subprocess.PIPE).stdout.decode("utf-8")
+                            r = requests.post(progress_url, data={"percent": percent, "gpustats": gpustats})
+                    except Exception as e:
+                        logger.error(f"DD Bot error.  Continuing...\n{e}")
                         pass
                     with image_display:
                         if j % args.display_rate == 0 or cur_t == -1 or intermediateStep == True:
@@ -2181,6 +2184,7 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         logger.info(f"🌱 Using starting seed: {seed}")
 
     args = {
+        "cuda_device": pargs.cuda_device,
         "use_checkpoint": pargs.use_checkpoint,
         "cutout_debug": pargs.cutout_debug,
         "ViTB32": pargs.ViTB32,
