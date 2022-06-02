@@ -186,7 +186,7 @@ def loop(args=None):
             if connected:
                 tb = traceback.format_exc()
                 logger.error(f"Bad job detected.\n\n{e}")
-                values = {"message": f"Job failed:\n\n{e}", "traceback": tb}
+                values = {"message": f"Job failed:\n\n{e}", "traceback": tb, "log": log}
                 r = requests.post(f"{DD_URL}/reject/{DD_NAME}/{uuid}", data=values)
             else:
                 logger.error(f"Error.  Check your DD_URL and if the DD app is running at that location.  Also check your own internet connectivity.  Exception:\n{e}")
