@@ -1147,6 +1147,27 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     "use_scale_shift_norm": False,
                 }
             )
+        # Credit
+        if args.diffusion_model == "lsun_uncond_100M_1200K_bs128":
+            model_config.update(
+                {
+                    "attention_resolutions": "16",
+                    "class_cond": False,
+                    "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
+                    "rescale_timesteps": False,
+                    "timestep_respacing": "",  # No need to edit this, it is taken care of later.
+                    "image_size": 256,
+                    "learn_sigma": True,
+                    "dropout": 0.0,
+                    "noise_schedule": "linear",
+                    "num_channels": 128,
+                    "num_heads": 1,
+                    "num_res_blocks": 2,
+                    "use_checkpoint": args.use_checkpoint,
+                    "use_fp16": not args.useCPU,
+                    "use_scale_shift_norm": False,
+                }
+            )
         symmetry_switch = 100.0 * (1.0 - (args.symmetry_switch / args.steps))
         v_symmetry_switch = 100.0 * (1.0 - (args.v_symmetry_switch / args.steps))
 

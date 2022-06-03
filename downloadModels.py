@@ -123,6 +123,16 @@ def loadModels(folders=pydot({"model_path": "models"})):
             "hash": "d321590e46b679bf6def1f1914b47c89e762c76f19ab3e3392c8ca07c791039c",
             "sources": [{"url": "https://huggingface.co/KaliYuga/pixel_art_diffusion_soft_256/resolve/main/pixel_art_diffusion_soft_256.pt"}],
         },
+        {
+            "file": f"{folders.model_path}/lsun_uncond_100M_1200K_bs128.pt",
+            "hash": "38e66420ba5c703df8ce78750721976e13442064b5df847b82f05ebc65120534",
+            "sources": [{"url": "https://openaipublic.blob.core.windows.net/diffusion/march-2021/lsun_uncond_100M_1200K_bs128.pt"}],
+        },
+        {
+            "file": f"{folders.model_path}/vit_b_16_plus_240-laion400m_e31-8fb26589.pt",
+            "hash": "8fb26589b9a8bab2e7a683d280e48df89b8e742f3a82132707282620b36facba",
+            "sources": [{"url": "https://github.com/mlfoundations/open_clip/releases/download/v0.2-weights/vit_b_16_plus_240-laion400m_e31-8fb26589.pt"}],
+        },
     ]
 
     modelProgress = widgets.IntProgress(
