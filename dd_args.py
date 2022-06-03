@@ -113,7 +113,7 @@ def parse(a=None):
             "256x256_diffusion_uncond",
             "pixel_art_diffusion_hard_256",
             "pixel_art_diffusion_soft_256",
-            "256x256_openai_comics_faces_by_alex_spirin_084000.pt",
+            "256x256_openai_comics_faces_by_alex_spirin_084000",
         ],
     )
     parser.add_argument("--use_secondary_model", help="Use RN101 model", type=str2bool, default=gp("use_secondary_model", True))

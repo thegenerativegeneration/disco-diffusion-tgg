@@ -1093,9 +1093,9 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                 {
                     "attention_resolutions": "16",
                     "class_cond": False,
-                    "diffusion_steps": 1000,
+                    "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
                     "rescale_timesteps": True,
-                    "timestep_respacing": "ddim100",
+                    "timestep_respacing": "ddim100",  # No need to edit this, it is taken care of later.
                     "image_size": 256,
                     "learn_sigma": True,
                     "noise_schedule": "linear",
@@ -1113,9 +1113,9 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                 {
                     "attention_resolutions": "16",
                     "class_cond": False,
-                    "diffusion_steps": 1000,
+                    "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
                     "rescale_timesteps": True,
-                    "timestep_respacing": "ddim100",
+                    "timestep_respacing": "ddim100",  # No need to edit this, it is taken care of later.
                     "image_size": 256,
                     "learn_sigma": True,
                     "noise_schedule": "linear",
@@ -1133,9 +1133,9 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                 {
                     "attention_resolutions": "16",
                     "class_cond": False,
-                    "diffusion_steps": 1000,
+                    "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
                     "rescale_timesteps": True,
-                    "timestep_respacing": str(timestep_respacing),
+                    "timestep_respacing": "ddim100",  # No need to edit this, it is taken care of later.
                     "image_size": 256,
                     "learn_sigma": True,
                     "noise_schedule": "linear",
