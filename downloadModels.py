@@ -2,6 +2,8 @@ import wget, os
 from loguru import logger
 from pydotted import pydot
 import hashlib
+import ipywidgets as widgets
+from IPython import display
 
 
 def loadModels(folders=pydot({"model_path": "models"})):
@@ -11,7 +13,8 @@ def loadModels(folders=pydot({"model_path": "models"})):
         folders (JSON): Folder parameters (e.g. `{"model_path":"path/to/download/models"}`)
     """
     # Download models if not present
-    for m in [
+
+    models_config = [
         {
             "file": f"{folders.model_path}/dpt_large-midas-2f21e586.pt",
             "hash": "2f21e586477d90cb9624c7eef5df7891edca49a1c4795ee2cb631fd4daa6ca69",
@@ -120,7 +123,22 @@ def loadModels(folders=pydot({"model_path": "models"})):
             "hash": "d321590e46b679bf6def1f1914b47c89e762c76f19ab3e3392c8ca07c791039c",
             "sources": [{"url": "https://huggingface.co/KaliYuga/pixel_art_diffusion_soft_256/resolve/main/pixel_art_diffusion_soft_256.pt"}],
         },
-    ]:
+    ]
+
+    modelProgress = widgets.IntProgress(
+        value=0, min=0, max=len(models_config), bar_style="info", orientation="horizontal", description="Downloading"  # 'success', 'info', 'warning', 'danger' or ''
+    )
+
+    print("Making sure required models are downloaded")
+    try:
+        display(modelProgress)
+    except:
+        logger.info("Downloading...")
+
+    ## TODO: Make this show incremental progress
+    ## TODO: Make this download in parallel
+
+    for m in models_config:
         if not os.path.exists(f'{m["file"]}'):
             downloaded = False
             for source in m["sources"]:
@@ -135,6 +153,7 @@ def loadModels(folders=pydot({"model_path": "models"})):
                             readable_hash = hashlib.sha256(bytes).hexdigest()
                             if readable_hash == m["hash"]:
                                 logger.success(f"✅ SHA-256 hash matches: {readable_hash}")
+                                modelProgress.value = modelProgress.value + 1
                                 downloaded = True
                             else:
                                 logger.error(f"🛑 Wrong hash! '{readable_hash}' instead of '{m['hash']}'")
@@ -145,6 +164,7 @@ def loadModels(folders=pydot({"model_path": "models"})):
             if downloaded == False:
                 logger.error(f"🛑 Could NOT download {m['file']} from any sources! 🛑")
         else:
+            modelProgress.value = modelProgress.value + 1
             logger.success(f'✅ Model already downloaded: {m["file"]}')
 
 
