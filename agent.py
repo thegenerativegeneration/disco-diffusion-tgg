@@ -150,8 +150,8 @@ def loop(args=None):
                     cut_innercut = "[0]*200+[2]*200+[5]*200+[7]*200+[9]*200"
 
                 if cut_schedule == "potato":
-                    cut_overview = "[0]*1000"
-                    cut_innercut = "[0]*1000"
+                    cut_overview = "[1]*1000"
+                    cut_innercut = "[1]*1000"
 
                 if render_type == "sketch":
                     if shape == "landscape":
@@ -162,6 +162,8 @@ def loop(args=None):
                         w_h = [512, 512]
                     if shape == "pano":
                         w_h = [1024, 256]
+                    if shape == "tiny-square":
+                        w_h = [256, 256]
                 else:
                     if shape == "landscape":
                         w_h = [1280, 768]
@@ -171,6 +173,8 @@ def loop(args=None):
                         w_h = [1024, 1024]
                     if shape == "pano":
                         w_h = [2048, 512]
+                    if shape == "tiny-square":
+                        w_h = [512, 512]
 
                 job = f"python disco.py --dd_bot=true --dd_bot_url={DD_URL} --dd_bot_agentname={DD_NAME} --batch_name={uuid} --display_rate=5 --use_secondary_model={use_secondary_model} --diffusion_model={diffusion_model} --set_seed={set_seed} --cuda_device={DD_CUDA_DEVICE} --n_batches=1 --images_out={DD_IMAGES_OUT} --steps={steps} --clamp_max={clamp_max} --clip_guidance_scale={clip_guidance_scale} --cut_ic_pow={cut_ic_pow} --sat_scale={sat_scale} --text_prompts"
                 cmd = job.split(" ")
