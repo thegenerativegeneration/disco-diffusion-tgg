@@ -149,6 +149,10 @@ def loop(args=None):
                     cut_overview = "[10]*200+[8]*200+[5]*200+[2]*200+[2]*200"
                     cut_innercut = "[0]*200+[2]*200+[5]*200+[7]*200+[9]*200"
 
+                if cut_schedule == "potato":
+                    cut_overview = "[0]*1000"
+                    cut_innercut = "[0]*1000"
+
                 if render_type == "sketch":
                     if shape == "landscape":
                         w_h = [640, 512]
