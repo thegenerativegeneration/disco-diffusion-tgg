@@ -2137,7 +2137,7 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         logger.warning(f"Changing output size to {side_x}x{side_y}. Dimensions must by multiples of 64.")
 
     if pargs.animation_mode == "Video Input":
-        videoFramesFolder = f"videoFrames"
+        videoFramesFolder = f"{folders.batch_folder}/videoFrames"
         createPath(videoFramesFolder)
         logger.info(f"Exporting Video Frames (1 every {pargs.extract_nth_frame})...")
         pargs.max_frames = len(glob(f"{videoFramesFolder}/*.jpg"))
