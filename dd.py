@@ -1103,7 +1103,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     "num_heads": 1,
                     "num_res_blocks": 2,
                     "use_checkpoint": args.use_checkpoint,
-                    "use_fp16": True,
+                    "use_fp16": not args.useCPU,
                     "use_scale_shift_norm": False,
                 }
             )
@@ -1123,7 +1123,27 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     "num_heads": 1,
                     "num_res_blocks": 2,
                     "use_checkpoint": args.use_checkpoint,
-                    "use_fp16": True,
+                    "use_fp16": not args.useCPU,
+                    "use_scale_shift_norm": False,
+                }
+            )
+        # Credit https://huggingface.co/spaces/Gradio-Blocks/clip-guided-faces/blob/main/app.py
+        if args.diffusion_model == "256x256_openai_comics_faces_by_alex_spirin_084000":
+            model_config.update(
+                {
+                    "attention_resolutions": "16",
+                    "class_cond": False,
+                    "diffusion_steps": 1000,
+                    "rescale_timesteps": True,
+                    "timestep_respacing": str(timestep_respacing),
+                    "image_size": 256,
+                    "learn_sigma": True,
+                    "noise_schedule": "linear",
+                    "num_channels": 128,
+                    "num_heads": 1,
+                    "num_res_blocks": 2,
+                    "use_checkpoint": args.use_checkpoint,
+                    "use_fp16": not args.useCPU,
                     "use_scale_shift_norm": False,
                 }
             )
