@@ -1067,7 +1067,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     "use_scale_shift_norm": True,
                 }
             )
-        elif args.diffusion_model == "256x256_diffusion_uncond":
+        if args.diffusion_model == "256x256_diffusion_uncond":
             model_config.update(
                 {
                     "attention_resolutions": "32, 16, 8",
@@ -1085,6 +1085,46 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     "use_checkpoint": args.use_checkpoint,
                     "use_fp16": not args.useCPU,
                     "use_scale_shift_norm": True,
+                }
+            )
+        # Credit https://github.com/KaliYuga-ai/Pixel-Art-Diffusion/blob/e037fd58e2aef58f28d7511ea6dcb184e898e39f/Pixel_Art_Diffusion_v1_0.ipynb
+        if args.diffusion_model == "pixel_art_diffusion_hard_256":
+            model_config.update(
+                {
+                    "attention_resolutions": "16",
+                    "class_cond": False,
+                    "diffusion_steps": 1000,
+                    "rescale_timesteps": True,
+                    "timestep_respacing": "ddim100",
+                    "image_size": 256,
+                    "learn_sigma": True,
+                    "noise_schedule": "linear",
+                    "num_channels": 128,
+                    "num_heads": 1,
+                    "num_res_blocks": 2,
+                    "use_checkpoint": args.use_checkpoint,
+                    "use_fp16": True,
+                    "use_scale_shift_norm": False,
+                }
+            )
+        # Credit https://github.com/KaliYuga-ai/Pixel-Art-Diffusion/blob/e037fd58e2aef58f28d7511ea6dcb184e898e39f/Pixel_Art_Diffusion_v1_0.ipynb
+        if args.diffusion_model == "pixel_art_diffusion_soft_256":
+            model_config.update(
+                {
+                    "attention_resolutions": "16",
+                    "class_cond": False,
+                    "diffusion_steps": 1000,
+                    "rescale_timesteps": True,
+                    "timestep_respacing": "ddim100",
+                    "image_size": 256,
+                    "learn_sigma": True,
+                    "noise_schedule": "linear",
+                    "num_channels": 128,
+                    "num_heads": 1,
+                    "num_res_blocks": 2,
+                    "use_checkpoint": args.use_checkpoint,
+                    "use_fp16": True,
+                    "use_scale_shift_norm": False,
                 }
             )
         symmetry_switch = 100.0 * (1.0 - (args.symmetry_switch / args.steps))

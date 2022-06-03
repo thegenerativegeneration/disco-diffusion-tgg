@@ -105,6 +105,21 @@ def loadModels(folders=pydot({"model_path": "models"})):
             "hash": "397923af8e79cdbb6a7127f12361acd7a2f83e06b05044ddf496e83de57a5bf0",
             "sources": [{"url": "https://download.pytorch.org/models/vgg16-397923af.pth"}],
         },
+        {
+            "file": f"{folders.model_path}/256x256_openai_comics_faces_by_alex_spirin_084000.pt",
+            "hash": "f587fd6d2edb093701931e5083a13ab6b76b3f457b60efd1aa873d60ee3d6388",
+            "sources": [{"url": "https://github.com/Sxela/DiscoDiffusion-Warp/releases/download/v0.1.0/256x256_openai_comics_faces_by_alex_spirin_084000.pt"}],
+        },
+        {
+            "file": f"{folders.model_path}/pixel_art_diffusion_hard_256.pt",
+            "hash": "be4a9de943ec06eef32c65a1008c60ad017723a4d35dc13169c66bb322234161",
+            "sources": [{"url": "https://huggingface.co/KaliYuga/pixel_art_diffusion_hard_256/resolve/main/pixel_art_diffusion_hard_256.pt"}],
+        },
+        {
+            "file": f"{folders.model_path}/pixel_art_diffusion_soft_256.pt",
+            "hash": "d321590e46b679bf6def1f1914b47c89e762c76f19ab3e3392c8ca07c791039c",
+            "sources": [{"url": "https://huggingface.co/KaliYuga/pixel_art_diffusion_soft_256/resolve/main/pixel_art_diffusion_soft_256.pt"}],
+        },
     ]:
         if not os.path.exists(f'{m["file"]}'):
             downloaded = False

@@ -108,7 +108,7 @@ def parse(a=None):
         "--diffusion_model",
         help="Diffusion Model",
         default=gp("diffusion_model", "512x512_diffusion_uncond_finetune_008100"),
-        choices=["512x512_diffusion_uncond_finetune_008100", "256x256_diffusion_uncond"],
+        choices=["512x512_diffusion_uncond_finetune_008100", "256x256_diffusion_uncond", "pixel_art_diffusion_hard_256", "pixel_art_diffusion_soft_256"],
     )
     parser.add_argument("--use_secondary_model", help="Use RN101 model", type=str2bool, default=gp("use_secondary_model", True))
     parser.add_argument("--diffusion_sampling_mode", help="Diffusion Sampling Mode", default=gp("diffusion_sampling_mode", "ddim"), choices=["plms", "ddim"])
