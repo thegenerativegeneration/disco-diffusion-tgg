@@ -56,6 +56,10 @@ def loop(args=None):
                 cut_ic_pow = results["details"]["cut_ic_pow"]
                 sat_scale = results["details"]["sat_scale"]
                 try:
+                    eta = results["details"]["eta"]
+                except:
+                    eta = 0.5
+                try:
                     diffusion_model = results["details"]["diffusion_model"]
                 except:
                     diffusion_model = "512x512_diffusion_uncond_finetune_008100"
@@ -176,7 +180,7 @@ def loop(args=None):
                     if shape == "tiny-square":
                         w_h = [512, 512]
 
-                job = f"python disco.py --dd_bot=true --dd_bot_url={DD_URL} --dd_bot_agentname={DD_NAME} --batch_name={uuid} --display_rate=5 --use_secondary_model={use_secondary_model} --diffusion_model={diffusion_model} --set_seed={set_seed} --cuda_device={DD_CUDA_DEVICE} --n_batches=1 --images_out={DD_IMAGES_OUT} --steps={steps} --clamp_max={clamp_max} --clip_guidance_scale={clip_guidance_scale} --cut_ic_pow={cut_ic_pow} --sat_scale={sat_scale} --text_prompts"
+                job = f"python disco.py --dd_bot=true --dd_bot_url={DD_URL} --dd_bot_agentname={DD_NAME} --batch_name={uuid} --display_rate=5 --use_secondary_model={use_secondary_model} --diffusion_model={diffusion_model} --set_seed={set_seed} --cuda_device={DD_CUDA_DEVICE} --n_batches=1 --images_out={DD_IMAGES_OUT} --steps={steps} --clamp_max={clamp_max} --eta={eta} --clip_guidance_scale={clip_guidance_scale} --cut_ic_pow={cut_ic_pow} --sat_scale={sat_scale} --text_prompts"
                 cmd = job.split(" ")
                 cmd.append(f"{prompt}")
                 cmd.append(f"--width_height")
