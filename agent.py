@@ -223,7 +223,7 @@ def loop(args=None):
                 files = {"file": open(f"{DD_IMAGES_OUT}/{uuid}/{uuid}(0).log", "rb")}
                 r = requests.post(f"{DD_URL}/uploadlog/{DD_NAME}/{uuid}", files=files, data=values)
                 try:
-                    files = {"file": open(f"configs/{uuid}/{uuid}_gen.yaml", "rb")}
+                    files = {"file": open(f"configs/{uuid}_gen.yaml", "rb")}
                     r = requests.post(f"{DD_URL}/uploadconfig/{DD_NAME}/{uuid}", files=files, data=values)
                 except Exception as e:
                     logger.error(e)
