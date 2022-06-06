@@ -170,7 +170,7 @@ def parse(a=None):
     parser.add_argument("--perlin_init", help="Perlin Init", type=str2bool, default=gp("perlin_init", False), required=False)
     parser.add_argument("--perlin_mode", help="Perlin Mode", default=gp("perlin_mode", "mixed"), choices=["mixed", "color", "gray"], required=False)
     parser.add_argument("--set_seed", help="Seed", default=gp("set_seed", "random_seed"), required=False)
-    parser.add_argument("--eta", help="ETA", type=float, default=gp("eta", 0.8), required=False)
+    parser.add_argument("--eta", help="ETA", type=float, default=gp("eta", 0.5), required=False)
     parser.add_argument("--clamp_grad", help="Clamp Gradient", type=str2bool, default=gp("clamp_grad", True), required=False)
     parser.add_argument("--clamp_max", help="Clamp Max", type=float, default=gp("clamp_max", 0.05), required=False)
     parser.add_argument("--randomize_class", help="Randomize Class", type=str2bool, default=gp("randomize_class", True), required=False)
