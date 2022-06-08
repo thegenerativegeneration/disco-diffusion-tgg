@@ -1181,9 +1181,10 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, folders=None):
         logger.info(f"💻 Starting Run: {args.batch_name}({batchNum}) at frame {args.start_frame}")
 
         ### Load Diffusion Model ###
+        model_config = prepModels(args)
         timestep_respacing = f"ddim{args.steps}"
         diffusion_steps = (1000 // args.steps) * args.steps if args.steps < 1000 else args.steps
-        model_config = prepModels(args)
+        logger.info(f"timestep_respacing : {timestep_respacing} | diffusion_steps: {diffusion_steps}")
         model_config.update({"timestep_respacing": timestep_respacing, "diffusion_steps": diffusion_steps})
         model, diffusion = create_model_and_diffusion(**model_config)
         model.load_state_dict(torch.load(f"{args.model_path}/{args.diffusion_model}.pt", map_location="cpu"))
@@ -1517,15 +1518,6 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, diff
                 except:
                     eta = 0.5
                 try:
-                    diffusion_model = results["details"]["diffusion_model"]
-                except:
-                    diffusion_model = "512x512_diffusion_uncond_finetune_008100"
-                if diffusion_model == "512x512_diffusion_uncond_finetune_008100" or diffusion_model == "256x256_diffusion_uncond":
-                    use_secondary_model = True
-                else:
-                    use_secondary_model = False
-
-                try:
                     render_type = results["details"]["render_type"]
                 except:
                     render_type = "render"
@@ -1614,6 +1606,7 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, diff
                     args.symmetry_loss = True
                     args.symmetry_switch = math.floor(int(steps) / 2)
                     args.symmetry_loss_scale = symmetry_loss_scale
+
                 if cut_schedule != "default":
                     args.cut_overview = cut_overview
                     args.cut_innercut = cut_innercut
@@ -1630,6 +1623,7 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, diff
                 args.sat_scale = sat_scale
                 args.width_height = w_h
                 args.prompts_series = prompts_series
+                args.text_prompts = prompts_series
                 args.images_out = "images_out"
                 args.init_images = "init_images"
                 w_h = [1280, 768]
@@ -1708,6 +1702,7 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusi
         torch.backends.cudnn.deterministic = True
 
     prompts_series = split_prompts(args.prompts_series, max_frames=args.max_frames) if args.prompts_series else None
+
     if prompts_series is not None and frame_num >= len(prompts_series):
         frame_prompt = prompts_series[-1]
         # logger.info(f'Text Prompt: {frame_prompt}`')
@@ -1727,7 +1722,8 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusi
 
     logger.info(f"Frame {frame_num} 📝 Prompt: {frame_prompt}")
 
-    model_stats, target_embeds, weights = [], [], []
+    model_stats = []
+    target_embeds, weights = [], []
 
     for clip_model in clip_models:
         cutn = 16
@@ -1849,6 +1845,7 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusi
             init = TF.to_tensor(init).add(TF.to_tensor(init2)).div(2).to(device).unsqueeze(0).mul(2).sub(1)
             del init2
 
+    global cur_t
     cur_t = None
     loss_values = []
     anim_complete_perc = (frame_num + 1) / args.max_frames
@@ -1880,11 +1877,7 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusi
         if args.init_generator == "perlin":
             if args.perlin_init:
                 init = regen_perlin(perlin_mode=args.perlin_mode, device=device, batch_size=args.batch_size, side_x=args.side_x, side_y=args.side_y)
-
-        cond_fn = createCondFn(
-            args, cur_t, diffusion, model_stats, model, secondary_model, lpips_model, normalize, loss_values, init_scale, anim_complete_perc, init, target, device
-        )
-
+        cond_fn = createCondFn(args, diffusion, model_stats, model, secondary_model, lpips_model, normalize, loss_values, init_scale, anim_complete_perc, init, target, device)
         if args.diffusion_sampling_mode == "ddim":
             samples = diffusion.ddim_sample_loop_progressive(
                 model,
@@ -2063,8 +2056,10 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusi
     # end disco
 
 
-def createCondFn(args, cur_t, diffusion, model_stats, model, secondary_model, lpips_model, normalize, loss_values, init_scale, anim_complete_perc, init, target, device):
+def createCondFn(args, diffusion, model_stats, model, secondary_model, lpips_model, normalize, loss_values, init_scale, anim_complete_perc, init, target, device):
     def cond_fn(x, t, y=None):
+        # cur_t is a global since i do not know how to have the function caller in gaussian_diffusion.py pass a cur_t value.
+        # logger.info(cur_t)
         with torch.enable_grad():
             x_is_NaN = False
             x = x.detach().requires_grad_()
@@ -2568,8 +2563,8 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         "padding_mode": pargs.padding_mode,
         "sampling_mode": pargs.sampling_mode,
         "frames_scale": pargs.frames_scale,
-        "skip_step_ratio": skip_step_ratio,
-        "calc_frames_skip_steps": calc_frames_skip_steps,
+        # "skip_step_ratio": skip_step_ratio,
+        # "calc_frames_skip_steps": calc_frames_skip_steps,
         "image_prompts": pargs.image_prompts,
         "cut_overview": pargs.cut_overview,
         "cut_innercut": pargs.cut_innercut,
