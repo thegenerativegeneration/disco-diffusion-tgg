@@ -1676,8 +1676,10 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, seconda
         logger.warning(f"Changing output size to {args.side_x}x{args.side_y}. Dimensions must by multiples of 64.")
 
     # Create any supporting folders
+    args.batchFolder = folders.batch_folder
+    args.partialFolder = f"{folders.batch_folder}/partials"
+
     if args.intermediate_saves and args.intermediates_in_subfolder is True:
-        args.partialFolder = f"{folders.batch_folder}/partials"
         createPath(args.partialFolder)
 
     if args.retain_overwritten_frames is True:
@@ -1687,6 +1689,16 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, seconda
     if args.cutout_debug is True:
         args.cutoutDebugFolder = f"{folders.batch_folder}/debug"
         createPath(args.cutoutDebugFolder)
+
+    if type(args.intermediate_saves) is not list:
+        if args.intermediate_saves:
+            steps_per_checkpoint = math.floor((args.steps - args.skip_steps - 1) // (args.intermediate_saves + 1))
+            steps_per_checkpoint = steps_per_checkpoint if steps_per_checkpoint > 0 else 1
+            logger.info(f"Will save every {steps_per_checkpoint} steps")
+        else:
+            args.steps_per_checkpoint = args.steps + 10
+    else:
+        args.steps_per_checkpoint = None
 
     ### Load Diffusion Model ###
     timestep_respacing = f"ddim{args.steps}"
@@ -2455,16 +2467,6 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         pargs.turbo_mode = False
         pargs.vr_mode = False
 
-    if type(pargs.intermediate_saves) is not list:
-        if pargs.intermediate_saves:
-            steps_per_checkpoint = math.floor((pargs.steps - pargs.skip_steps - 1) // (pargs.intermediate_saves + 1))
-            steps_per_checkpoint = steps_per_checkpoint if steps_per_checkpoint > 0 else 1
-            logger.info(f"Will save every {steps_per_checkpoint} steps")
-        else:
-            steps_per_checkpoint = pargs.steps + 10
-    else:
-        steps_per_checkpoint = None
-
     skip_step_ratio = int(pargs.frames_skip_steps.rstrip("%")) / 100
     calc_frames_skip_steps = math.floor(pargs.steps * skip_step_ratio)
 
@@ -2594,7 +2596,7 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         "cut_icgray_p": pargs.cut_icgray_p,
         "intermediate_saves": pargs.intermediate_saves,
         "intermediates_in_subfolder": pargs.intermediates_in_subfolder,
-        "steps_per_checkpoint": steps_per_checkpoint,
+        # "steps_per_checkpoint": steps_per_checkpoint,
         "perlin_init": pargs.perlin_init,
         "perlin_mode": pargs.perlin_mode,
         "set_seed": pargs.set_seed,
