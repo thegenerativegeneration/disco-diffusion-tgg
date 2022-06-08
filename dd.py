@@ -1692,9 +1692,9 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, seconda
 
     if type(args.intermediate_saves) is not list:
         if args.intermediate_saves:
-            steps_per_checkpoint = math.floor((args.steps - args.skip_steps - 1) // (args.intermediate_saves + 1))
-            steps_per_checkpoint = steps_per_checkpoint if steps_per_checkpoint > 0 else 1
-            logger.info(f"Will save every {steps_per_checkpoint} steps")
+            args.steps_per_checkpoint = math.floor((args.steps - args.skip_steps - 1) // (args.intermediate_saves + 1))
+            args.steps_per_checkpoint = args.steps_per_checkpoint if args.steps_per_checkpoint > 0 else 1
+            logger.info(f"Will save every {args.steps_per_checkpoint} steps")
         else:
             args.steps_per_checkpoint = args.steps + 10
     else:
