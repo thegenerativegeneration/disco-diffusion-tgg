@@ -1187,21 +1187,6 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, folders=None):
     try:
         logger.info(f"💻 Starting Run: {args.batch_name}({batchNum}) at frame {args.start_frame}")
 
-        ### Load Diffusion Model ###
-        model_config = prepModels(args)
-        timestep_respacing = f"ddim{args.steps}"
-        diffusion_steps = (1000 // args.steps) * args.steps if args.steps < 1000 else args.steps
-        logger.info(f"timestep_respacing : {timestep_respacing} | diffusion_steps: {diffusion_steps}")
-        model_config.update({"timestep_respacing": timestep_respacing, "diffusion_steps": diffusion_steps})
-        model, diffusion = create_model_and_diffusion(**model_config)
-        model.load_state_dict(torch.load(f"{args.model_path}/{args.diffusion_model}.pt", map_location="cpu"))
-        model.requires_grad_(False).eval().to(device)
-        for name, param in model.named_parameters():
-            if "qkv" in name or "norm" in name or "proj" in name:
-                param.requires_grad_()
-        if model_config["use_fp16"]:
-            model.convert_to_fp16()
-
         ### Load CLIP Model(s) ###
         clip_models = []
         if args.ViTB32 is True:
@@ -1465,17 +1450,17 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, folders=None):
                 skip_steps = args.calc_frames_skip_steps
 
             if not args.dd_bot:
-                disco(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusion, secondary_model, lpips_model, model, midas_model, midas_transform, device)
+                disco(args, folders, frame_num, clip_models, init_scale, skip_steps, secondary_model, lpips_model, midas_model, midas_transform, device)
             else:
                 ## Discord Bot Mode
-                bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusion, secondary_model, lpips_model, model, midas_model, midas_transform, device)
+                bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, secondary_model, lpips_model, midas_model, midas_transform, device)
     except:
         tb = traceback.format_exc()
         logger.error(tb)
         sys.exit(1)
 
 
-def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusion, secondary_model, lpips_model, model, midas_model, midas_transform, device):
+def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, secondary_model, lpips_model, midas_model, midas_transform, device):
     POLL_INTERVAL = 5
     progress_url = f"{args.dd_bot_url}/progress/{args.dd_bot_agentname}/{args.batch_name}"
     logger.info(f"Discord Bot mode enabled: {progress_url}")
@@ -1647,7 +1632,7 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, diff
                 args.batchFolder = folders.batch_folder
                 args.batchNum = 0
                 s = time.time()
-                disco(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusion, secondary_model, lpips_model, model, midas_model, midas_transform, device)
+                disco(args, folders, frame_num, clip_models, init_scale, skip_steps, secondary_model, lpips_model, midas_model, midas_transform, device)
                 e = time.time()
                 duration = e - s
                 fn = f"{folders.batch_folder}/{uuid}(0)_0.png"
@@ -1683,12 +1668,27 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, diff
             sleep(POLL_INTERVAL)
 
 
-def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusion, secondary_model, lpips_model, model, midas_model, midas_transform, device):
+def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, secondary_model, lpips_model, midas_model, midas_transform, device):
     # Get corrected sizes
     args.side_x = (args.width_height[0] // 64) * 64
     args.side_y = (args.width_height[1] // 64) * 64
     if args.side_x != args.width_height[0] or args.side_y != args.width_height[1]:
         logger.warning(f"Changing output size to {args.side_x}x{args.side_y}. Dimensions must by multiples of 64.")
+
+    ### Load Diffusion Model ###
+    timestep_respacing = f"ddim{args.steps}"
+    diffusion_steps = (1000 // args.steps) * args.steps if args.steps < 1000 else args.steps
+    logger.info(f"timestep_respacing : {timestep_respacing} | diffusion_steps: {diffusion_steps}")
+    model_config = prepModels(args)
+    model_config.update({"timestep_respacing": timestep_respacing, "diffusion_steps": diffusion_steps})
+    model, diffusion = create_model_and_diffusion(**model_config)
+    model.load_state_dict(torch.load(f"{args.model_path}/{args.diffusion_model}.pt", map_location="cpu"))
+    model.requires_grad_(False).eval().to(device)
+    for name, param in model.named_parameters():
+        if "qkv" in name or "norm" in name or "proj" in name:
+            param.requires_grad_()
+    if model_config["use_fp16"]:
+        model.convert_to_fp16()
 
     # logger.info(args)
     if not args.resume_run:
@@ -2078,6 +2078,8 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusi
                             #   display.clear_output()
 
         # plt.plot(np.array(loss_values), 'r')
+    del model
+    del diffusion
     # end disco
 
 
