@@ -1665,7 +1665,7 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, diff
                 tb = traceback.format_exc()
                 logger.error(f"Bad job detected.\n\n{e}\n\n{tb}")
                 values = {"message": f"Job failed:\n\n{e}", "traceback": tb}
-                # r = requests.post(f"{args.dd_bot_url}/reject/{args.dd_bot_agentname}/{uuid}", data=values)
+                r = requests.post(f"{args.dd_bot_url}/reject/{args.dd_bot_agentname}/{uuid}", data=values)
             else:
                 logger.error(f"Error.  Check your DD_URL and if the DD app is running at that location.  Also check your own internet connectivity.  Exception:\n{e}")
         finally:
