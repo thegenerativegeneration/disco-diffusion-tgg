@@ -1,3 +1,6 @@
+from yaml import dump, full_load
+from time import sleep
+import traceback
 import os, sys
 import random
 import gc
@@ -33,6 +36,7 @@ from pydotted import pydot
 from loguru import logger
 from deepdiff import DeepHash
 import sqlite3
+from torchmetrics import RetrievalFallOut
 from tqdm.notebook import tqdm
 from twilio.rest import Client
 from guided_diffusion.script_util import (
@@ -1036,147 +1040,150 @@ def processKeyFrameProperties(
     )
 
 
-def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=None, folders=None):
-    try:
-        logger.info(f"💻 Starting Run: {args.batch_name}({batchNum}) at frame {start_frame}")
-        progress_url = f"{args.dd_bot_url}/progress/{args.dd_bot_agentname}/{args.batch_name}"
-        preview_url = f"{args.dd_bot_url}/preview/{args.dd_bot_agentname}/{args.batch_name}"
-        print(args.dd_bot)
-        if args.dd_bot:
-            logger.info(f"Discord Bot mode enabled: {progress_url}")
-        logger.info("Prepping models...")
-        model_config = model_and_diffusion_defaults()
-        # Update Model Settings
-        if args.diffusion_model == "512x512_diffusion_uncond_finetune_008100":
-            model_config.update(
-                {
-                    "attention_resolutions": "32, 16, 8",
-                    "class_cond": False,
-                    "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
-                    "rescale_timesteps": True,
-                    "timestep_respacing": 250,  # No need to edit this, it is taken care of later.
-                    "image_size": 512,
-                    "learn_sigma": True,
-                    "noise_schedule": "linear",
-                    "num_channels": 256,
-                    "num_head_channels": 64,
-                    "num_res_blocks": 2,
-                    "resblock_updown": True,
-                    "use_checkpoint": args.use_checkpoint,
-                    "use_fp16": not args.useCPU,
-                    "use_scale_shift_norm": True,
-                }
-            )
-        if args.diffusion_model == "256x256_diffusion_uncond":
-            model_config.update(
-                {
-                    "attention_resolutions": "32, 16, 8",
-                    "class_cond": False,
-                    "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
-                    "rescale_timesteps": True,
-                    "timestep_respacing": 250,  # No need to edit this, it is taken care of later.
-                    "image_size": 256,
-                    "learn_sigma": True,
-                    "noise_schedule": "linear",
-                    "num_channels": 256,
-                    "num_head_channels": 64,
-                    "num_res_blocks": 2,
-                    "resblock_updown": True,
-                    "use_checkpoint": args.use_checkpoint,
-                    "use_fp16": not args.useCPU,
-                    "use_scale_shift_norm": True,
-                }
-            )
-        # Credit https://github.com/KaliYuga-ai/Pixel-Art-Diffusion/blob/e037fd58e2aef58f28d7511ea6dcb184e898e39f/Pixel_Art_Diffusion_v1_0.ipynb
-        if args.diffusion_model == "pixel_art_diffusion_hard_256":
-            model_config.update(
-                {
-                    "attention_resolutions": "16",
-                    "class_cond": False,
-                    "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
-                    "rescale_timesteps": True,
-                    "timestep_respacing": "ddim100",  # No need to edit this, it is taken care of later.
-                    "image_size": 256,
-                    "learn_sigma": True,
-                    "noise_schedule": "linear",
-                    "num_channels": 128,
-                    "num_heads": 1,
-                    "num_res_blocks": 2,
-                    "use_checkpoint": args.use_checkpoint,
-                    "use_fp16": not args.useCPU,
-                    "use_scale_shift_norm": False,
-                }
-            )
-        # Credit https://github.com/KaliYuga-ai/Pixel-Art-Diffusion/blob/e037fd58e2aef58f28d7511ea6dcb184e898e39f/Pixel_Art_Diffusion_v1_0.ipynb
-        if args.diffusion_model == "pixel_art_diffusion_soft_256":
-            model_config.update(
-                {
-                    "attention_resolutions": "16",
-                    "class_cond": False,
-                    "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
-                    "rescale_timesteps": True,
-                    "timestep_respacing": "ddim100",  # No need to edit this, it is taken care of later.
-                    "image_size": 256,
-                    "learn_sigma": True,
-                    "noise_schedule": "linear",
-                    "num_channels": 128,
-                    "num_heads": 1,
-                    "num_res_blocks": 2,
-                    "use_checkpoint": args.use_checkpoint,
-                    "use_fp16": not args.useCPU,
-                    "use_scale_shift_norm": False,
-                }
-            )
-        # Credit https://huggingface.co/spaces/Gradio-Blocks/clip-guided-faces/blob/main/app.py
-        if args.diffusion_model == "256x256_openai_comics_faces_by_alex_spirin_084000":
-            model_config.update(
-                {
-                    "attention_resolutions": "16",
-                    "class_cond": False,
-                    "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
-                    "rescale_timesteps": True,
-                    "timestep_respacing": "ddim100",  # No need to edit this, it is taken care of later.
-                    "image_size": 256,
-                    "learn_sigma": True,
-                    "noise_schedule": "linear",
-                    "num_channels": 128,
-                    "num_heads": 1,
-                    "num_res_blocks": 2,
-                    "use_checkpoint": args.use_checkpoint,
-                    "use_fp16": not args.useCPU,
-                    "use_scale_shift_norm": False,
-                }
-            )
-        # Credit
-        if args.diffusion_model == "lsun_uncond_100M_1200K_bs128":
-            model_config.update(
-                {
-                    "attention_resolutions": "16",
-                    "class_cond": False,
-                    "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
-                    "rescale_timesteps": False,
-                    "timestep_respacing": "",  # No need to edit this, it is taken care of later.
-                    "image_size": 256,
-                    "learn_sigma": True,
-                    "dropout": 0.0,
-                    "noise_schedule": "linear",
-                    "num_channels": 128,
-                    "num_heads": 1,
-                    "num_res_blocks": 2,
-                    "use_checkpoint": args.use_checkpoint,
-                    "use_fp16": not args.useCPU,
-                    "use_scale_shift_norm": False,
-                }
-            )
-        symmetry_switch = 100.0 * (1.0 - (args.symmetry_switch / args.steps))
-        v_symmetry_switch = 100.0 * (1.0 - (args.v_symmetry_switch / args.steps))
+def prepModels(args=None):
+    logger.info("Prepping models...")
+    model_config = model_and_diffusion_defaults()
+    # Update Model Settings
+    if args.diffusion_model == "512x512_diffusion_uncond_finetune_008100":
+        model_config.update(
+            {
+                "attention_resolutions": "32, 16, 8",
+                "class_cond": False,
+                "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
+                "rescale_timesteps": True,
+                "timestep_respacing": 250,  # No need to edit this, it is taken care of later.
+                "image_size": 512,
+                "learn_sigma": True,
+                "noise_schedule": "linear",
+                "num_channels": 256,
+                "num_head_channels": 64,
+                "num_res_blocks": 2,
+                "resblock_updown": True,
+                "use_checkpoint": args.use_checkpoint,
+                "use_fp16": not args.useCPU,
+                "use_scale_shift_norm": True,
+            }
+        )
+    if args.diffusion_model == "256x256_diffusion_uncond":
+        model_config.update(
+            {
+                "attention_resolutions": "32, 16, 8",
+                "class_cond": False,
+                "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
+                "rescale_timesteps": True,
+                "timestep_respacing": 250,  # No need to edit this, it is taken care of later.
+                "image_size": 256,
+                "learn_sigma": True,
+                "noise_schedule": "linear",
+                "num_channels": 256,
+                "num_head_channels": 64,
+                "num_res_blocks": 2,
+                "resblock_updown": True,
+                "use_checkpoint": args.use_checkpoint,
+                "use_fp16": not args.useCPU,
+                "use_scale_shift_norm": True,
+            }
+        )
+    # Credit https://github.com/KaliYuga-ai/Pixel-Art-Diffusion/blob/e037fd58e2aef58f28d7511ea6dcb184e898e39f/Pixel_Art_Diffusion_v1_0.ipynb
+    if args.diffusion_model == "pixel_art_diffusion_hard_256":
+        model_config.update(
+            {
+                "attention_resolutions": "16",
+                "class_cond": False,
+                "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
+                "rescale_timesteps": True,
+                "timestep_respacing": "ddim100",  # No need to edit this, it is taken care of later.
+                "image_size": 256,
+                "learn_sigma": True,
+                "noise_schedule": "linear",
+                "num_channels": 128,
+                "num_heads": 1,
+                "num_res_blocks": 2,
+                "use_checkpoint": args.use_checkpoint,
+                "use_fp16": not args.useCPU,
+                "use_scale_shift_norm": False,
+            }
+        )
+    # Credit https://github.com/KaliYuga-ai/Pixel-Art-Diffusion/blob/e037fd58e2aef58f28d7511ea6dcb184e898e39f/Pixel_Art_Diffusion_v1_0.ipynb
+    if args.diffusion_model == "pixel_art_diffusion_soft_256":
+        model_config.update(
+            {
+                "attention_resolutions": "16",
+                "class_cond": False,
+                "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
+                "rescale_timesteps": True,
+                "timestep_respacing": "ddim100",  # No need to edit this, it is taken care of later.
+                "image_size": 256,
+                "learn_sigma": True,
+                "noise_schedule": "linear",
+                "num_channels": 128,
+                "num_heads": 1,
+                "num_res_blocks": 2,
+                "use_checkpoint": args.use_checkpoint,
+                "use_fp16": not args.useCPU,
+                "use_scale_shift_norm": False,
+            }
+        )
+    # Credit https://huggingface.co/spaces/Gradio-Blocks/clip-guided-faces/blob/main/app.py
+    if args.diffusion_model == "256x256_openai_comics_faces_by_alex_spirin_084000":
+        model_config.update(
+            {
+                "attention_resolutions": "16",
+                "class_cond": False,
+                "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
+                "rescale_timesteps": True,
+                "timestep_respacing": "ddim100",  # No need to edit this, it is taken care of later.
+                "image_size": 256,
+                "learn_sigma": True,
+                "noise_schedule": "linear",
+                "num_channels": 128,
+                "num_heads": 1,
+                "num_res_blocks": 2,
+                "use_checkpoint": args.use_checkpoint,
+                "use_fp16": not args.useCPU,
+                "use_scale_shift_norm": False,
+            }
+        )
+    # Credit
+    if args.diffusion_model == "lsun_uncond_100M_1200K_bs128":
+        model_config.update(
+            {
+                "attention_resolutions": "16",
+                "class_cond": False,
+                "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
+                "rescale_timesteps": False,
+                "timestep_respacing": "",  # No need to edit this, it is taken care of later.
+                "image_size": 256,
+                "learn_sigma": True,
+                "dropout": 0.0,
+                "noise_schedule": "linear",
+                "num_channels": 128,
+                "num_heads": 1,
+                "num_res_blocks": 2,
+                "use_checkpoint": args.use_checkpoint,
+                "use_fp16": not args.useCPU,
+                "use_scale_shift_norm": False,
+            }
+        )
+    return model_config
 
-        if args.symmetry_loss:
-            logger.info(f"Symmetry ends at {100-symmetry_switch}%")
-        if args.v_symmetry_loss:
-            logger.info(f"Vertical Symmetry ends at {100-v_symmetry_switch}%")
+
+def clipLoad(model_name, device):
+    logger.info(f"🤖 Loading model '{model_name}'...")
+    model = clip.load(model_name, jit=False, download_root="models")[0].eval().requires_grad_(False).to(device)
+    return model
+
+
+def do_run(args=None, device=None, is_colab=False, batchNum=None, folders=None):
+    gc.collect()
+    torch.cuda.empty_cache()
+    try:
+        logger.info(f"💻 Starting Run: {args.batch_name}({batchNum}) at frame {args.start_frame}")
+
+        ### Load Diffusion Model ###
         timestep_respacing = f"ddim{args.steps}"
         diffusion_steps = (1000 // args.steps) * args.steps if args.steps < 1000 else args.steps
+        model_config = prepModels(args)
         model_config.update({"timestep_respacing": timestep_respacing, "diffusion_steps": diffusion_steps})
         model, diffusion = create_model_and_diffusion(**model_config)
         model.load_state_dict(torch.load(f"{args.model_path}/{args.diffusion_model}.pt", map_location="cpu"))
@@ -1187,55 +1194,56 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
         if model_config["use_fp16"]:
             model.convert_to_fp16()
 
-        gc.collect()
-        torch.cuda.empty_cache()
+        ### Load CLIP Model(s) ###
         clip_models = []
-
-        def clipLoad(model_name):
-            logger.info(f"🤖 Loading model '{model_name}'...")
-            model = clip.load(model_name, jit=False, download_root="models")[0].eval().requires_grad_(False).to(device)
-            clip_models.append(model)
-
         if args.ViTB32 is True:
-            clipLoad("ViT-B/32")
+            clip_models.append(clipLoad("ViT-B/32", device))
         if args.ViTB16 is True:
-            clipLoad("ViT-B/16")
+            clip_models.append(clipLoad("ViT-B/16", device))
         if args.ViTL14 is True:
-            clipLoad("ViT-L/14")
+            clip_models.append(clipLoad("ViT-L/14", device))
         if args.ViTL14_336 is True:
-            clipLoad("ViT-L/14@336px")
+            clip_models.append(clipLoad("ViT-L/14@336px", device))
         if args.RN50 is True:
-            clipLoad("RN50")
+            clip_models.append(clipLoad("RN50", device))
         if args.RN50x4 is True:
-            clipLoad("RN50x4")
+            clip_models.append(clipLoad("RN50x4", device))
         if args.RN50x16 is True:
-            clipLoad("RN50x16")
+            clip_models.append(clipLoad("RN50x16", device))
         if args.RN50x64 is True:
-            clipLoad("RN50x64")
+            clip_models.append(clipLoad("RN50x64", device))
         if args.RN101 is True:
-            clipLoad("RN101")
+            clip_models.append(clipLoad("RN101", device))
 
+        ### Load Secondary Model ###
         if args.use_secondary_model:
             logger.info("🤖 Loading secondary model...")
             secondary_model = SecondaryDiffusionImageNet2()
             secondary_model.load_state_dict(torch.load(f"{args.model_path}/secondary_model_imagenet_2.pth", map_location="cpu"))
             secondary_model.eval().requires_grad_(False).to(device)
 
+        ### Load LPIPS Model ###
         logger.info(f"🤖 Loading LPIPS...")
         lpips_model = lpips.LPIPS(net="vgg", pretrained=True, verbose=False, model_path=f"{args.model_path}/vgg16-397923af.pth").to(device)
 
-        seed = args.seed
+        ### Load Midas Model ###
+        midas_model = None
+        midas_transform = None
+        if (args.animation_mode == "3D") and (args.midas_weight > 0.0):
+            (
+                midas_model,
+                midas_transform,
+                midas_net_w,
+                midas_net_h,
+                midas_resize_mode,
+                midas_normalization,
+            ) = init_midas_depth_model(args.midas_depth_model, model_path=args.model_path, device=device)
 
-        normalize = T.Normalize(
-            mean=[0.48145466, 0.4578275, 0.40821073],
-            std=[0.26862954, 0.26130258, 0.27577711],
-        )
-
+        ### Parameter processing ###
         angle = None
         zoom = None
         translation_x = None
         translation_y = None
-
         if args.key_frames:
             (
                 angle,
@@ -1277,17 +1285,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
             rotation_3d_y = float(rotation_3d_y)
             rotation_3d_z = float(rotation_3d_z)
 
-        # logger.info(range(args.start_frame, args.max_frames))
-
-        if (args.animation_mode == "3D") and (args.midas_weight > 0.0):
-            (
-                midas_model,
-                midas_transform,
-                midas_net_w,
-                midas_net_h,
-                midas_resize_mode,
-                midas_normalization,
-            ) = init_midas_depth_model(args.midas_depth_model, model_path=args.model_path, device=device)
+        # Note: start_frame and max_frames is 1 for non-animation mode, (n_batches is what makes the multiple images for non-animations)
         for frame_num in range(args.start_frame, args.max_frames):
             # if stop_on_next_loop:
             #  break
@@ -1300,24 +1298,25 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                 batchBar = tqdm(range(args.max_frames), ncols=40, dynamic_ncols=True, desc="Frames", position=0, leave=True)
                 batchBar.n = frame_num
                 batchBar.refresh()
-            target_image = None  # test
+            args.target_image = None  # test
             # Inits if not video frames
             if args.animation_mode != "Video Input":
                 if args.init_image in ["", "None", "none", "NONE"]:
-                    init_image = None
+                    args.init_image = None
                 else:
-                    init_image = args.init_image
-                    target_image = None  # Not supported in Video Input Mode
+                    args.init_image = args.init_image
+                    args.target_image = None  # Not supported in Video Input Mode
                 init_scale = args.init_scale
                 skip_steps = args.skip_steps
 
                 # Credit: aztec_man#3032 (5/17/2022)
                 if args.target_image in ["", "None", "none", "NONE"]:
-                    target_image = None
+                    args.target_image = None
                 else:
-                    target_image = args.target_image
-                    target_scale = args.target_scale
+                    args.target_image = args.target_image
+                    args.target_scale = args.target_scale
 
+            ### 2D Animation Processing ###
             if args.animation_mode == "2D":
                 if args.key_frames:
                     angle = angle_series[frame_num]
@@ -1331,14 +1330,14 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                         f"translation_y: {translation_y}",
                     )
 
+                ### Move/Rotate/Transform if past frame 0 ###
                 if frame_num > 0:
-                    seed += 1
+                    args.seed += 1
                     if args.resume_run and frame_num == args.start_frame:
                         img_0 = cv2.imread(args.batchFolder + f"/{args.batch_name}({args.batchNum})_{args.start_frame-1:04}.png")
                     else:
-
-                        # img_0 = cv2.imread("prevFrame.png")
                         img_0 = cv2.imread(f"{args.batchFolder}/prevFrame.png")
+
                     center = (1 * img_0.shape[1] // 2, 1 * img_0.shape[0] // 2)
                     trans_mat = np.float32([[1, 0, translation_x], [0, 1, translation_y]])
                     rot_mat = cv2.getRotationMatrix2D(center, angle, zoom)
@@ -1353,13 +1352,15 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                     )
 
                     cv2.imwrite(f"{args.batchFolder}/prevFrameScaled.png", img_0)
-                    init_image = f"{args.batchFolder}/prevFrameScaled.png"
+                    args.init_image = f"{args.batchFolder}/prevFrameScaled.png"
                     init_scale = args.frames_scale
                     skip_steps = args.calc_frames_skip_steps
 
+            ### 3D Animation Processing ###
             if args.animation_mode == "3D":
+                ### Move/Rotate/Transform if past frame 0 ###
                 if frame_num > 0:
-                    seed += 1
+                    args.seed += 1
                     if args.resume_run and frame_num == args.start_frame:
                         img_filepath = args.batchFolder + f"/{args.batch_name}({args.batchNum})_{args.start_frame-1:04}.png"
                         if args.turbo_mode and frame_num > args.turbo_preroll:
@@ -1442,485 +1443,731 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, start_frame=No
                                 cv2.imwrite(f"{args.batchFolder}/oldFrameScaled.png", oldWarpedImg)  # swap in for blending later
                                 logger.info("clip/diff this frame - generate clip diff image")
 
-                    init_image = f"{args.batchFolder}/prevFrameScaled.png"
+                    args.init_image = f"{args.batchFolder}/prevFrameScaled.png"
                     init_scale = args.frames_scale
                     skip_steps = args.calc_frames_skip_steps
 
+            ### Video Init Animation Processing ###
             if args.animation_mode == "Video Input":
                 if not args.video_init_seed_continuity:
-                    seed += 1
-                init_image = f"{args.videoFramesFolder}/{frame_num+1:04}.jpg"
-                logger.debug(f"🎞️ Video Frame for init image: {init_image}")
+                    args.seed += 1
+                args.init_image = f"{args.videoFramesFolder}/{frame_num+1:04}.jpg"
+                logger.debug(f"🎞️ Video Frame for init image: {args.init_image}")
                 init_scale = args.frames_scale
                 skip_steps = args.calc_frames_skip_steps
 
-            loss_values = []
-
-            if seed is not None:
-                logger.info(f"🌱 Seed used: {seed}")
-                np.random.seed(seed)
-                random.seed(seed)
-                torch.manual_seed(seed)
-                torch.cuda.manual_seed_all(seed)
-                torch.backends.cudnn.deterministic = True
-
-            target_embeds, weights = [], []
-
-            prompts_series = split_prompts(args.prompts_series, max_frames=args.max_frames) if args.prompts_series else None
-            if prompts_series is not None and frame_num >= len(prompts_series):
-                frame_prompt = prompts_series[-1]
-                # logger.info(f'Text Prompt: {frame_prompt}`')
-            elif args.prompts_series is not None:
-                frame_prompt = prompts_series[frame_num]
+            if not args.dd_bot:
+                disco(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusion, secondary_model, lpips_model, model, midas_model, midas_transform, device)
             else:
-                frame_prompt = []
-
-            image_prompts_series = (split_prompts(args.image_prompts_series, max_frames=args.max_frames) if args.image_prompts_series else None,)
-            if image_prompts_series is not None and frame_num >= len(image_prompts_series):
-                image_prompt = image_prompts_series[-1]
-                # logger.info(f'🖼️ Image Prompt: {image_prompt}`')
-            elif args.image_prompts_series is not None:
-                image_prompt = image_prompts_series[frame_num]
-            else:
-                image_prompt = []
-
-            logger.info(f"Frame {frame_num} 📝 Prompt: {frame_prompt}")
-
-            anim_complete_perc = (frame_num + 1) / args.max_frames
-            model_stats = []
-
-            for clip_model in clip_models:
-                cutn = 16
-                model_stat = {
-                    "clip_model": None,
-                    "target_embeds": [],
-                    "make_cutouts": None,
-                    "weights": [],
-                }
-                model_stat["clip_model"] = clip_model
-
-                for prompt in frame_prompt:
-                    txt, weight = parse_prompt(prompt)
-                    txt = clip_model.encode_text(clip.tokenize(prompt).to(device)).float()
-
-                    if args.fuzzy_prompt:
-                        for i in range(25):
-                            model_stat["target_embeds"].append((txt + torch.randn(txt.shape).cuda() * args.rand_mag).clamp(0, 1))
-                            model_stat["weights"].append(weight)
-                    else:
-                        model_stat["target_embeds"].append(txt)
-                        model_stat["weights"].append(weight)
-
-                if image_prompt:
-                    model_stat["make_cutouts"] = MakeCutouts(clip_model.visual.input_resolution, cutn, skip_augs=args.skip_augs)
-                    for prompt in image_prompt:
-                        path, weight = parse_prompt(prompt)
-                        img = Image.open(fetch(path)).convert("RGB")
-                        img = TF.resize(
-                            img,
-                            min(args.side_x, args.side_y, *img.size),
-                            T.InterpolationMode.LANCZOS,
-                        )
-                        batch = model_stat["make_cutouts"](TF.to_tensor(img).to(device).unsqueeze(0).mul(2).sub(1))
-                        embed = clip_model.encode_image(normalize(batch)).float()
-                        if args.fuzzy_prompt:
-                            for i in range(25):
-                                model_stat["target_embeds"].append((embed + torch.randn(embed.shape).cuda() * args.rand_mag).clamp(0, 1))
-                                weights.extend([weight / cutn] * cutn)
-                        else:
-                            model_stat["target_embeds"].append(embed)
-                            model_stat["weights"].extend([weight / cutn] * cutn)
-
-                model_stat["target_embeds"] = torch.cat(model_stat["target_embeds"])
-                model_stat["weights"] = torch.tensor(model_stat["weights"], device=device)
-                if model_stat["weights"].sum().abs() < 1e-3:
-                    raise RuntimeError("The weights must not sum to 0.")
-                model_stat["weights"] /= model_stat["weights"].sum().abs()
-                model_stats.append(model_stat)
-
-            init = None
-            if init_image is not None:
-                init = Image.open(fetch(init_image)).convert("RGB")
-                init = init.resize((args.side_x, args.side_y), resample=Image.LANCZOS)
-                init = TF.to_tensor(init).to(device).unsqueeze(0).mul(2).sub(1)
-
-            # Credit: aztec_man#3032 (5/17/2022)
-            target = None
-            if target_image is not None:
-                target = Image.open(fetch(target_image)).convert("RGB")
-                target = target.resize((args.side_x, args.side_y), resample=Image.LANCZOS)
-                target = TF.to_tensor(target).to(device).unsqueeze(0).mul(2).sub(1)
-
-            if args.init_generator == "voronoi":
-                logger.info(f"Generating Voronoi Init ({args.voronoi_points} points)...")
-                init = voronoi_utils.render(width=args.side_x, height=args.side_y, num_points=args.voronoi_points).convert("RGB")
-                init = init.resize((args.side_x, args.side_y), resample=Image.LANCZOS)
-                init = TF.to_tensor(init).to(device).unsqueeze(0).mul(2).sub(1)
-
-            if args.init_generator == "perlin":
-                if args.perlin_init:
-                    if args.perlin_mode == "color":
-                        init = create_perlin_noise(
-                            [1.5**-i * 0.5 for i in range(12)],
-                            1,
-                            1,
-                            False,
-                            side_x=args.side_x,
-                            side_y=args.side_y,
-                        )
-                        init2 = create_perlin_noise(
-                            [1.5**-i * 0.5 for i in range(8)],
-                            4,
-                            4,
-                            False,
-                            side_x=args.side_x,
-                            side_y=args.side_y,
-                        )
-                    elif args.perlin_mode == "gray":
-                        init = create_perlin_noise(
-                            [1.5**-i * 0.5 for i in range(12)],
-                            1,
-                            1,
-                            True,
-                            side_x=args.side_x,
-                            side_y=args.side_y,
-                        )
-                        init2 = create_perlin_noise(
-                            [1.5**-i * 0.5 for i in range(8)],
-                            4,
-                            4,
-                            True,
-                            side_x=args.side_x,
-                            side_y=args.side_y,
-                        )
-                    else:
-                        init = create_perlin_noise(
-                            [1.5**-i * 0.5 for i in range(12)],
-                            1,
-                            1,
-                            False,
-                            side_x=args.side_x,
-                            side_y=args.side_y,
-                        )
-                        init2 = create_perlin_noise(
-                            [1.5**-i * 0.5 for i in range(8)],
-                            4,
-                            4,
-                            True,
-                            side_x=args.side_x,
-                            side_y=args.side_y,
-                        )
-                    # init = TF.to_tensor(init).add(TF.to_tensor(init2)).div(2).to(device)
-                    init = TF.to_tensor(init).add(TF.to_tensor(init2)).div(2).to(device).unsqueeze(0).mul(2).sub(1)
-                    del init2
-
-            cur_t = None
-
-            def cond_fn(x, t, y=None):
-                with torch.enable_grad():
-                    x_is_NaN = False
-                    x = x.detach().requires_grad_()
-                    n = x.shape[0]
-                    if args.use_secondary_model is True:
-                        alpha = torch.tensor(
-                            diffusion.sqrt_alphas_cumprod[cur_t],
-                            device=device,
-                            dtype=torch.float32,
-                        )
-                        sigma = torch.tensor(
-                            diffusion.sqrt_one_minus_alphas_cumprod[cur_t],
-                            device=device,
-                            dtype=torch.float32,
-                        )
-                        cosine_t = alpha_sigma_to_t(alpha, sigma)
-                        out = secondary_model(x, cosine_t[None].repeat([n])).pred
-                        fac = diffusion.sqrt_one_minus_alphas_cumprod[cur_t]
-                        x_in = out * fac + x * (1 - fac)
-                        x_in_grad = torch.zeros_like(x_in)
-                    else:
-                        my_t = torch.ones([n], device=device, dtype=torch.long) * cur_t
-                        out = diffusion.p_mean_variance(model, x, my_t, clip_denoised=False, model_kwargs={"y": y})
-                        fac = diffusion.sqrt_one_minus_alphas_cumprod[cur_t]
-                        x_in = out["pred_xstart"] * fac + x * (1 - fac)
-                        x_in_grad = torch.zeros_like(x_in)
-                    for model_stat in model_stats:
-                        for i in range(args.cutn_batches):
-                            t_int = int(t.item()) + 1  # errors on last step without +1, need to find source
-                            # when using SLIP Base model the dimensions need to be hard coded to avoid AttributeError: 'VisionTransformer' object has no attribute 'input_resolution'
-                            try:
-                                input_resolution = model_stat["clip_model"].visual.input_resolution
-                            except:
-                                input_resolution = 224
-
-                            cuts = MakeCutoutsDango(
-                                input_resolution,
-                                args=args,
-                                Overview=eval(args.cut_overview)[1000 - t_int],
-                                InnerCrop=eval(args.cut_innercut)[1000 - t_int],
-                                IC_Size_Pow=args.cut_ic_pow,
-                                IC_Grey_P=eval(args.cut_icgray_p)[1000 - t_int],
-                            )
-                            clip_in = normalize(cuts(x_in.add(1).div(2)))
-                            image_embeds = model_stat["clip_model"].encode_image(clip_in).float()
-                            dists = spherical_dist_loss(
-                                image_embeds.unsqueeze(1),
-                                model_stat["target_embeds"].unsqueeze(0),
-                            )
-                            dists = dists.view(
-                                [
-                                    eval(args.cut_overview)[1000 - t_int] + eval(args.cut_innercut)[1000 - t_int],
-                                    n,
-                                    -1,
-                                ]
-                            )
-                            losses = dists.mul(model_stat["weights"]).sum(2).mean(0)
-                            loss_values.append(losses.sum().item())  # log loss, probably shouldn't do per cutn_batch
-                            x_in_grad += torch.autograd.grad(losses.sum() * args.clip_guidance_scale, x_in)[0] / args.cutn_batches
-                    tv_losses = tv_loss(x_in)
-                    if args.use_secondary_model is True:
-                        range_losses = range_loss(out)
-                    else:
-                        range_losses = range_loss(out["pred_xstart"])
-                    sat_losses = torch.abs(x_in - x_in.clamp(min=-1, max=1)).mean()
-                    loss = tv_losses.sum() * args.tv_scale + range_losses.sum() * args.range_scale + sat_losses.sum() * args.sat_scale
-
-                    if init is not None and init_scale:
-                        init_losses = lpips_model(x_in, init)
-                        loss = loss + init_losses.sum() * init_scale
-
-                    if target is not None and args.target_scale:
-                        target_losses = lpips_model(x_in, target)
-                        loss = loss + target_losses.sum() * args.target_scale * anim_complete_perc**2
-
-                    if args.symmetry_loss and np.array(t.cpu())[0] > 10 * symmetry_switch:
-                        sloss = symm_loss(x_in, lpips_model)
-                        loss = loss + sloss.sum() * args.symmetry_loss_scale
-
-                    if args.v_symmetry_loss and np.array(t.cpu())[0] > 10 * v_symmetry_switch:
-                        sloss = v_symm_loss(x_in, lpips_model)
-                        loss = loss + sloss.sum() * args.v_symmetry_loss_scale
-
-                    x_in_grad += torch.autograd.grad(loss, x_in)[0]
-                    if torch.isnan(x_in_grad).any() == False:
-                        grad = -torch.autograd.grad(x_in, x, x_in_grad)[0]
-                    else:
-                        logger.debug("NaN'd")
-                        x_is_NaN = True
-                        grad = torch.zeros_like(x)
-                if args.clamp_grad and x_is_NaN == False:
-                    magnitude = grad.square().mean().sqrt()
-                    return grad * magnitude.clamp(max=args.clamp_max) / magnitude  # min=-0.02, min=-clamp_max,
-                return grad
-
-            image_display = Output()
-            for i in range(args.n_batches):
-                if args.animation_mode == "None":
-                    display.clear_output(wait=True)
-                    batchBar = tqdm(range(args.n_batches), ncols=40, dynamic_ncols=True, desc="Batches", position=0, leave=True)
-                    batchBar.n = i
-                    batchBar.refresh()
-                # logger.info('')
-                if is_in_notebook():
-                    display.display(image_display)
-                display.display(image_display)  # temp fix
-                gc.collect()
-                torch.cuda.empty_cache()
-                cur_t = diffusion.num_timesteps - skip_steps - 1
-                total_steps = cur_t
-
-                if args.init_generator == "voronoi":
-                    logger.info(f"Generating Voronoi Init ({args.voronoi_points} points)...")
-                    paletteFile = None
-                    if args.voronoi_palette not in [None, "None", "none", "NONE", ""]:
-                        paletteFile = f"{folders.root_path}/palettes/{args.voronoi_palette}"
-                    init = voronoi_utils.render(width=args.side_x, height=args.side_y, num_points=args.voronoi_points, palette_config=paletteFile).convert("RGB")
-                    init = init.resize((args.side_x, args.side_y), resample=Image.LANCZOS)
-                    init = TF.to_tensor(init).to(device).unsqueeze(0).mul(2).sub(1)
-                if args.init_generator == "perlin":
-                    if args.perlin_init:
-                        init = regen_perlin(perlin_mode=args.perlin_mode, device=device, batch_size=args.batch_size, side_x=args.side_x, side_y=args.side_y)
-
-                if args.diffusion_sampling_mode == "ddim":
-                    samples = diffusion.ddim_sample_loop_progressive(
-                        model,
-                        (args.batch_size, 3, args.side_y, args.side_x),
-                        clip_denoised=args.clip_denoised,
-                        model_kwargs={},
-                        cond_fn=cond_fn,
-                        progress=True,
-                        skip_timesteps=skip_steps,
-                        init_image=init,
-                        randomize_class=args.randomize_class,
-                        eta=args.eta,
-                    )
-                else:
-                    samples = diffusion.plms_sample_loop_progressive(
-                        model,
-                        (args.batch_size, 3, args.side_y, args.side_x),
-                        clip_denoised=args.clip_denoised,
-                        model_kwargs={},
-                        cond_fn=cond_fn,
-                        progress=True,
-                        skip_timesteps=skip_steps,
-                        init_image=init,
-                        randomize_class=args.randomize_class,
-                        order=2,
-                    )
-
-                # Diffuse Step
-                for j, sample in enumerate(samples):
-                    cur_t -= 1
-                    intermediateStep = False
-                    if args.steps_per_checkpoint is not None:
-                        if j % args.steps_per_checkpoint == 0 and j > 0:
-                            intermediateStep = True
-                    elif j in args.intermediate_saves:
-                        intermediateStep = True
-                    percent = math.ceil(j / total_steps * 100)
-                    try:
-                        if args.dd_bot:
-                            cd = device
-                            smi = f"nvidia-smi --query-gpu=gpu_name,temperature.gpu,utilization.gpu,utilization.memory,memory.used --format=csv,noheader,nounits -i {str(device).split(':')[1]}"
-                            gpustats = subprocess.run(smi.split(" "), stdout=subprocess.PIPE).stdout.decode("utf-8")
-                            r = requests.post(progress_url, data={"percent": percent, "gpustats": gpustats})
-                    except Exception as e:
-                        logger.error(f"DD Bot error.  Continuing...\n{e}")
-                        pass
-                    with image_display:
-                        if j % args.display_rate == 0 or cur_t == -1 or intermediateStep == True:
-                            for k, image in enumerate(sample["pred_xstart"]):
-                                tqdm.write(f"Batch {i}, step {j}, output {k}:")
-                                # tqdm.write(datetime.now().strftime("%y%m%d-%H%M%S_%f"))
-                                percent = math.ceil(j / total_steps * 100)
-                                if args.n_batches > 0:
-                                    # if intermediates are saved to the subfolder, don't append a step or percentage to the name
-                                    if cur_t == -1 and args.intermediates_in_subfolder is True:
-                                        save_num = f"{frame_num:04}" if args.animation_mode != "None" else i
-                                        filename = f"{args.batch_name}({args.batchNum})_{save_num}.png"
-                                    else:
-                                        # If we're working with percentages, append it
-                                        if args.steps_per_checkpoint is not None:
-                                            filename = f"{args.batch_name}({args.batchNum})_{i:04}-{percent:02}%.png"
-                                        # Or else, iIf we're working with specific steps, append those
-                                        else:
-                                            filename = f"{args.batch_name}({args.batchNum})_{i:04}-{j:03}.png"
-                                image = TF.to_pil_image(image.add(1).div(2).clamp(0, 1))
-                                if j % args.display_rate == 0 or cur_t == -1:
-                                    # image.save('progress.png')
-                                    image.save(f"{args.batchFolder}/progress.png")
-                                    try:
-                                        if args.dd_bot:
-                                            files = {"file": open(f"{args.batchFolder}/progress.png", "rb")}
-                                            logger.info("Uploaded progress.png...")
-                                            r = requests.post(preview_url, files=files)
-                                    except:
-                                        logger.error("DD Bot error.  Continuing...")
-                                        pass
-                                    # prints output on console.
-                                    if is_in_notebook():
-                                        display.clear_output(wait=True)
-                                        display.display(image)
-                                    display.clear_output(wait=True)  # temp fix
-                                    display.display(image)  # temp fix
-                                    if args.console_preview:
-                                        output = climage.convert(
-                                            f"{args.batchFolder}/progress.png",
-                                            width=args.console_preview_width,
-                                        )
-                                        tqdm.write(output)
-                                if args.steps_per_checkpoint is not None:
-                                    if j % args.steps_per_checkpoint == 0 and j > 0:
-                                        if args.intermediates_in_subfolder is True:
-                                            image.save(f"{args.partialFolder}/{filename}")
-                                        else:
-                                            image.save(f"{args.batchFolder}/{filename}")
-                                else:
-                                    if j in args.intermediate_saves:
-                                        if args.intermediates_in_subfolder is True:
-                                            image.save(f"{args.partialFolder}/{filename}")
-                                        else:
-                                            image.save(f"{args.batchFolder}/{filename}")
-                                if cur_t == -1:
-                                    logger.info("Image render completed.")
-                                    if frame_num == 0:
-                                        save_settings(
-                                            args,
-                                            batchFolder=args.batchFolder,
-                                            batch_name=args.batch_name,
-                                            batchNum=args.batchNum,
-                                        )
-                                    if args.animation_mode != "None":
-                                        # image.save("prevFrame.png")
-                                        image.save(f"{args.batchFolder}/prevFrame.png")
-                                    image_name = f"{args.batchFolder}/{filename}"
-                                    if args.save_metadata == True:
-                                        logger.info("Tagging PNG with metadata.")
-                                        metadata = PngInfo()
-                                        metadata.add_text("dd_args", json.dumps(sanitize(args)))
-                                        image.save(image_name, pnginfo=metadata)
-                                    else:
-                                        image.save(image_name)
-
-                                    logger.info(f"Image saved to '{image_name}'")
-                                    # dbcon = getDB(args.db)
-                                    # if (dbcon) != None:
-                                    #     sql = """
-                                    #        INSERT INTO images (job_uuid, timestamp, image_path, image)
-                                    #        VALUES (?, ?, ?, ?)
-                                    #     """
-                                    #     logger.debug(sql)
-                                    #     dbcon.execute(sql, (args.uuid, time.time(), image_name, convertToBinaryData(image_name)))
-                                    #     dbcon.commit()
-                                    #     dbcon.close()
-                                    # else:
-                                    #     logger.debug("No database specified.  Skipping DB update...")
-
-                                    if args.animation_mode == "3D":
-                                        # If turbo, save a blended image
-                                        if args.turbo_mode and frame_num > 0:
-                                            # Mix new image with prevFrameScaled
-                                            blend_factor = (1) / int(args.turbo_steps)
-                                            # newFrame = cv2.imread("prevFrame.png")  # This is already updated..
-                                            newFrame = cv2.imread(f"{args.batchFolder}/prevFrame.png")
-                                            prev_frame_warped = cv2.imread("prevFrameScaled.png")
-                                            blendedImage = cv2.addWeighted(
-                                                newFrame,
-                                                blend_factor,
-                                                prev_frame_warped,
-                                                (1 - blend_factor),
-                                                0.0,
-                                            )
-                                            cv2.imwrite(
-                                                f"{args.batchFolder}/{filename}",
-                                                blendedImage,
-                                            )
-                                        else:
-                                            image.save(f"{args.batchFolder}/{filename}")
-
-                                        if args.vr_mode:
-                                            generate_eye_views(
-                                                args.TRANSLATION_SCALE,
-                                                args.batchFolder,
-                                                filename,
-                                                frame_num,
-                                                midas_model,
-                                                midas_transform,
-                                                vr_eye_angle=args.vr_eye_angle,
-                                                vr_ipd=args.vr_ipd,
-                                                device=device,
-                                                args=args,
-                                            )
-
-                                    # if frame_num != args.max_frames-1:
-                                    #   display.clear_output()
-
-                # plt.plot(np.array(loss_values), 'r')
+                ## Discord Bot Mode
+                bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusion, secondary_model, lpips_model, model, midas_model, midas_transform, device)
     except:
-        import traceback
-
         tb = traceback.format_exc()
         logger.error(tb)
         sys.exit(1)
+
+
+def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusion, secondary_model, lpips_model, model, midas_model, midas_transform, device):
+    POLL_INTERVAL = 5
+    progress_url = f"{args.dd_bot_url}/progress/{args.dd_bot_agentname}/{args.batch_name}"
+    logger.info(f"Discord Bot mode enabled: {progress_url}")
+    smi = f"nvidia-smi --query-gpu=gpu_name,temperature.gpu,utilization.gpu,utilization.memory,memory.used --format=csv,noheader,nounits -i {str(device).split(':')[1]}"
+    gpustats = subprocess.run(smi.split(" "), stdout=subprocess.PIPE).stdout.decode("utf-8")
+    logger.info(str(device))
+    run = True
+    idle_time = 0
+    while run == True:
+        connected = False
+        url = f"{args.dd_bot_url}/takeorder/{args.dd_bot_agentname}/{idle_time}"
+        try:
+            logger.debug(f"🌎 Checking '{url}'")
+            results = requests.get(url).json()
+            if results["success"]:
+                idle_time = 0
+                connected = True
+                logger.info(results["details"])
+                tp = results["details"]["text_prompt"]
+                tp = tp.replace("“", '"')
+                tp = tp.replace("”", '"')
+                # Attempt to accept JSON Structured Text Prompt...
+                try:
+                    tp = eval(tp)
+                    if type(tp) == list:
+                        prompts_series = {"0": tp}
+                        logger.info("JSON structured text prompt found.")
+                    else:
+                        raise Exception("Non-list item found")
+                except:
+                    tp = results["details"]["text_prompt"]
+                    tp = tp.replace(":", "")
+                    tp = tp.replace('"', "")
+                    prompts_series = {"0": [tp]}
+                    logger.info("Flat string text prompt found.")
+
+                steps = results["details"]["steps"]
+                uuid = results["details"]["uuid"]
+                shape = results["details"]["shape"]
+
+                clamp_max = float(results["details"]["clamp_max"])
+                clip_guidance_scale = results["details"]["clip_guidance_scale"]
+                cut_ic_pow = int(results["details"]["cut_ic_pow"])
+                sat_scale = float(results["details"]["sat_scale"])
+                try:
+                    eta = float(results["details"]["eta"])
+                except:
+                    eta = 0.5
+                try:
+                    diffusion_model = results["details"]["diffusion_model"]
+                except:
+                    diffusion_model = "512x512_diffusion_uncond_finetune_008100"
+                if diffusion_model == "512x512_diffusion_uncond_finetune_008100" or diffusion_model == "256x256_diffusion_uncond":
+                    use_secondary_model = True
+                else:
+                    use_secondary_model = False
+
+                try:
+                    render_type = results["details"]["render_type"]
+                except:
+                    render_type = "render"
+                try:
+                    cut_schedule = results["details"]["cut_schedule"]
+                except:
+                    cut_schedule = "default"
+                try:
+                    set_seed = results["details"]["set_seed"]
+                except:
+                    set_seed = "random_seed"
+                try:
+                    symmetry = results["details"]["symmetry"]
+                except:
+                    symmetry = "no"
+                try:
+                    symmetry_loss_scale = results["details"]["symmetry_loss_scale"]
+                except:
+                    symmetry_loss_scale = 1500
+
+                if not clamp_max:
+                    clamp_max = 0.05
+
+                if not clip_guidance_scale:
+                    clip_guidance_scale = 1500
+
+                if not cut_ic_pow:
+                    cut_ic_pow = 1
+
+                if not sat_scale:
+                    sat_scale = 0
+
+                if set_seed == -1:
+                    set_seed = "random_seed"
+
+                if not shape:
+                    shape = "landscape"
+
+                cut_overview = "[12]*400+[4]*600"
+                cut_innercut = "[4]*400+[12]*600"
+
+                if cut_schedule == "default":
+                    cut_overview = "[12]*400+[4]*600"
+                    cut_innercut = "[4]*400+[12]*600"
+
+                if cut_schedule == "detailed-a":
+                    cut_overview = "[10]*200+[8]*200+[6]*200+[2]*200+[2]*200"
+                    cut_innercut = "[0]*200+[2]*200+[6]*200+[8]*200+[10]*200"
+
+                if cut_schedule == "detailed-b":
+                    cut_overview = "[10]*200+[8]*200+[6]*200+[4]*200+[2]*200"
+                    cut_innercut = "[2]*200+[2]*200+[8]*200+[8]*200+[10]*200"
+
+                if cut_schedule == "ram_efficient":
+                    cut_overview = "[10]*200+[8]*200+[5]*200+[2]*200+[2]*200"
+                    cut_innercut = "[0]*200+[2]*200+[5]*200+[7]*200+[9]*200"
+
+                if cut_schedule == "potato":
+                    cut_overview = "[1]*1000"
+                    cut_innercut = "[1]*1000"
+
+                if render_type == "sketch":
+                    if shape == "landscape":
+                        w_h = [640, 512]
+                    if shape == "portrait":
+                        w_h = [512, 640]
+                    if shape == "square":
+                        w_h = [512, 512]
+                    if shape == "pano":
+                        w_h = [1024, 256]
+                    if shape == "tiny-square":
+                        w_h = [256, 256]
+                else:
+                    if shape == "landscape":
+                        w_h = [1280, 768]
+                    if shape == "portrait":
+                        w_h = [768, 1280]
+                    if shape == "square":
+                        w_h = [1024, 1024]
+                    if shape == "pano":
+                        w_h = [2048, 512]
+                    if shape == "tiny-square":
+                        w_h = [512, 512]
+
+                if symmetry == "yes":
+                    args.symmetry_loss = True
+                    args.symmetry_switch = math.floor(int(steps) / 2)
+                    args.symmetry_loss_scale = symmetry_loss_scale
+                if cut_schedule != "default":
+                    args.cut_overview = cut_overview
+                    args.cut_innercut = cut_innercut
+
+                args.batch_name = uuid
+                args.steps = int(steps)
+                args.set_seed = set_seed
+                args.n_batches = 1
+                args.steps = steps
+                args.clamp_max = clamp_max
+                args.eta = eta
+                args.clip_guidance_scale = clip_guidance_scale
+                args.cut_ic_pow = cut_ic_pow
+                args.sat_scale = sat_scale
+                args.width_height = w_h
+                args.prompts_series = prompts_series
+                args.images_out = "images_out"
+                args.init_images = "init_images"
+                w_h = [1280, 768]
+                folders = setupFolders(pargs=args, PROJECT_DIR=os.getcwd())
+                args.batchFolder = folders.batch_folder
+                args.batchNum = 0
+                s = time.time()
+                disco(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusion, secondary_model, lpips_model, model, midas_model, midas_transform, device)
+                e = time.time()
+                duration = e - s
+                files = {"file": open(f"{folders.batch_folder}/{uuid}(0)_0.png", "rb")}
+                values = {"duration": duration}
+                r = requests.post(f"{args.dd_bot_url}/upload/{args.dd_bot_agentname}/{uuid}", files=files, data=values)
+                dump(args.todict(), open(f"configs/{uuid}_gen.yaml", "w"))
+                try:
+                    files = {"file": open(f"{folders.batch_folder}/{uuid}(0).log", "rb")}
+                    r = requests.post(f"{args.dd_bot_url}/uploadlog/{args.dd_bot_agentname}/{uuid}", files=files, data=values)
+                    files = {"file": open(f"configs/{uuid}_gen.yaml", "rb")}
+                    r = requests.post(f"{args.dd_bot_url}/uploadconfig/{args.dd_bot_agentname}/{uuid}", files=files, data=values)
+                except Exception as e:
+                    logger.error(e)
+            else:
+                logger.info(f"{results['message']}")
+        except KeyboardInterrupt as kb:
+            logger.info("Exiting...")
+            run = False
+        except Exception as e:
+            if connected:
+                tb = traceback.format_exc()
+                logger.error(f"Bad job detected.\n\n{e}\n\n{tb}")
+                values = {"message": f"Job failed:\n\n{e}", "traceback": tb}
+                # r = requests.post(f"{args.dd_bot_url}/reject/{args.dd_bot_agentname}/{uuid}", data=values)
+            else:
+                logger.error(f"Error.  Check your DD_URL and if the DD app is running at that location.  Also check your own internet connectivity.  Exception:\n{e}")
+        finally:
+            logger.info(f"Sleeping for {POLL_INTERVAL} seconds...  I've been sleeping for {idle_time} seconds.")
+            idle_time = idle_time + POLL_INTERVAL
+            sleep(POLL_INTERVAL)
+
+
+def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusion, secondary_model, lpips_model, model, midas_model, midas_transform, device):
+    logger.info(args)
+    if not args.resume_run:
+        batchNum = len(glob(folders.batch_folder + "/*.txt"))
+
+    while (
+        os.path.isfile(f"{folders.batch_folder}/{args.batch_name}({batchNum})_settings.txt") is True
+        or os.path.isfile(f"{folders.batch_folder}/{args.batch_name}-{batchNum}_settings.txt") is True
+    ):
+        batchNum += 1
+    logfile = f"{folders.batch_folder}/{args.batch_name}({batchNum}).log"
+    logger.configure(
+        handlers=[
+            {"sink": sys.stdout, "level": "INFO"},
+            {"sink": logfile, "level": "DEBUG"},
+        ]
+    )
+    logger.info(f"Logger switched to '{logfile}' logfile.")
+    logger.info(f"Running job '{args.uuid}'...")
+    normalize = T.Normalize(
+        mean=[0.48145466, 0.4578275, 0.40821073],
+        std=[0.26862954, 0.26130258, 0.27577711],
+    )
+
+    if args.dd_bot:
+        progress_url = f"{args.dd_bot_url}/progress/{args.dd_bot_agentname}/{args.batch_name}"
+        preview_url = f"{args.dd_bot_url}/preview/{args.dd_bot_agentname}/{args.batch_name}"
+        logger.info(f"Discord Bot mode enabled: {progress_url}")
+
+    if args.seed is not None:
+        logger.info(f"🌱 Seed used: {args.seed}")
+        np.random.seed(args.seed)
+        random.seed(args.seed)
+        torch.manual_seed(args.seed)
+        torch.cuda.manual_seed_all(args.seed)
+        torch.backends.cudnn.deterministic = True
+
+    prompts_series = split_prompts(args.prompts_series, max_frames=args.max_frames) if args.prompts_series else None
+    if prompts_series is not None and frame_num >= len(prompts_series):
+        frame_prompt = prompts_series[-1]
+        # logger.info(f'Text Prompt: {frame_prompt}`')
+    elif args.prompts_series is not None:
+        frame_prompt = prompts_series[frame_num]
+    else:
+        frame_prompt = []
+
+    image_prompts_series = (split_prompts(args.image_prompts_series, max_frames=args.max_frames) if args.image_prompts_series else None,)
+    if image_prompts_series is not None and frame_num >= len(image_prompts_series):
+        image_prompt = image_prompts_series[-1]
+        # logger.info(f'🖼️ Image Prompt: {image_prompt}`')
+    elif args.image_prompts_series is not None:
+        image_prompt = image_prompts_series[frame_num]
+    else:
+        image_prompt = []
+
+    logger.info(f"Frame {frame_num} 📝 Prompt: {frame_prompt}")
+
+    model_stats, target_embeds, weights = [], [], []
+
+    for clip_model in clip_models:
+        cutn = 16
+        model_stat = {"clip_model": None, "target_embeds": [], "make_cutouts": None, "weights": []}
+        model_stat["clip_model"] = clip_model
+
+        for prompt in frame_prompt:
+            txt, weight = parse_prompt(prompt)
+            txt = clip_model.encode_text(clip.tokenize(prompt).to(device)).float()
+
+            if args.fuzzy_prompt:
+                for i in range(25):
+                    model_stat["target_embeds"].append((txt + torch.randn(txt.shape).cuda() * args.rand_mag).clamp(0, 1))
+                    model_stat["weights"].append(weight)
+            else:
+                model_stat["target_embeds"].append(txt)
+                model_stat["weights"].append(weight)
+
+        if image_prompt:
+            model_stat["make_cutouts"] = MakeCutouts(clip_model.visual.input_resolution, cutn, skip_augs=args.skip_augs)
+            for prompt in image_prompt:
+                path, weight = parse_prompt(prompt)
+                img = Image.open(fetch(path)).convert("RGB")
+                img = TF.resize(
+                    img,
+                    min(args.side_x, args.side_y, *img.size),
+                    T.InterpolationMode.LANCZOS,
+                )
+                batch = model_stat["make_cutouts"](TF.to_tensor(img).to(device).unsqueeze(0).mul(2).sub(1))
+                embed = clip_model.encode_image(normalize(batch)).float()
+                if args.fuzzy_prompt:
+                    for i in range(25):
+                        model_stat["target_embeds"].append((embed + torch.randn(embed.shape).cuda() * args.rand_mag).clamp(0, 1))
+                        weights.extend([weight / cutn] * cutn)
+                else:
+                    model_stat["target_embeds"].append(embed)
+                    model_stat["weights"].extend([weight / cutn] * cutn)
+
+        model_stat["target_embeds"] = torch.cat(model_stat["target_embeds"])
+        model_stat["weights"] = torch.tensor(model_stat["weights"], device=device)
+        if model_stat["weights"].sum().abs() < 1e-3:
+            raise RuntimeError("The weights must not sum to 0.")
+        model_stat["weights"] /= model_stat["weights"].sum().abs()
+        model_stats.append(model_stat)
+
+    init = None
+    if args.init_image is not None:
+        init = Image.open(fetch(args.init_image)).convert("RGB")
+        init = init.resize((args.side_x, args.side_y), resample=Image.LANCZOS)
+        init = TF.to_tensor(init).to(device).unsqueeze(0).mul(2).sub(1)
+
+    # Credit: aztec_man#3032 (5/17/2022)
+    target = None
+    if args.target_image is not None:
+        target = Image.open(fetch(args.target_image)).convert("RGB")
+        target = target.resize((args.side_x, args.side_y), resample=Image.LANCZOS)
+        target = TF.to_tensor(target).to(device).unsqueeze(0).mul(2).sub(1)
+
+    if args.init_generator == "voronoi":
+        logger.info(f"Generating Voronoi Init ({args.voronoi_points} points)...")
+        init = voronoi_utils.render(width=args.side_x, height=args.side_y, num_points=args.voronoi_points).convert("RGB")
+        init = init.resize((args.side_x, args.side_y), resample=Image.LANCZOS)
+        init = TF.to_tensor(init).to(device).unsqueeze(0).mul(2).sub(1)
+
+    if args.init_generator == "perlin":
+        if args.perlin_init:
+            if args.perlin_mode == "color":
+                init = create_perlin_noise(
+                    [1.5**-i * 0.5 for i in range(12)],
+                    1,
+                    1,
+                    False,
+                    side_x=args.side_x,
+                    side_y=args.side_y,
+                )
+                init2 = create_perlin_noise(
+                    [1.5**-i * 0.5 for i in range(8)],
+                    4,
+                    4,
+                    False,
+                    side_x=args.side_x,
+                    side_y=args.side_y,
+                )
+            elif args.perlin_mode == "gray":
+                init = create_perlin_noise(
+                    [1.5**-i * 0.5 for i in range(12)],
+                    1,
+                    1,
+                    True,
+                    side_x=args.side_x,
+                    side_y=args.side_y,
+                )
+                init2 = create_perlin_noise(
+                    [1.5**-i * 0.5 for i in range(8)],
+                    4,
+                    4,
+                    True,
+                    side_x=args.side_x,
+                    side_y=args.side_y,
+                )
+            else:
+                init = create_perlin_noise(
+                    [1.5**-i * 0.5 for i in range(12)],
+                    1,
+                    1,
+                    False,
+                    side_x=args.side_x,
+                    side_y=args.side_y,
+                )
+                init2 = create_perlin_noise(
+                    [1.5**-i * 0.5 for i in range(8)],
+                    4,
+                    4,
+                    True,
+                    side_x=args.side_x,
+                    side_y=args.side_y,
+                )
+            # init = TF.to_tensor(init).add(TF.to_tensor(init2)).div(2).to(device)
+            init = TF.to_tensor(init).add(TF.to_tensor(init2)).div(2).to(device).unsqueeze(0).mul(2).sub(1)
+            del init2
+
+    cur_t = None
+    loss_values = []
+    anim_complete_perc = (frame_num + 1) / args.max_frames
+
+    image_display = Output()
+    for i in range(args.n_batches):
+        if args.animation_mode == "None":
+            display.clear_output(wait=True)
+            batchBar = tqdm(range(args.n_batches), ncols=40, dynamic_ncols=True, desc="Batches", position=0, leave=True)
+            batchBar.n = i
+            batchBar.refresh()
+        # logger.info('')
+        if is_in_notebook():
+            display.display(image_display)
+        display.display(image_display)  # temp fix
+        gc.collect()
+        torch.cuda.empty_cache()
+        cur_t = diffusion.num_timesteps - skip_steps - 1
+        total_steps = cur_t
+
+        if args.init_generator == "voronoi":
+            logger.info(f"Generating Voronoi Init ({args.voronoi_points} points)...")
+            paletteFile = None
+            if args.voronoi_palette not in [None, "None", "none", "NONE", ""]:
+                paletteFile = f"{folders.root_path}/palettes/{args.voronoi_palette}"
+            init = voronoi_utils.render(width=args.side_x, height=args.side_y, num_points=args.voronoi_points, palette_config=paletteFile).convert("RGB")
+            init = init.resize((args.side_x, args.side_y), resample=Image.LANCZOS)
+            init = TF.to_tensor(init).to(device).unsqueeze(0).mul(2).sub(1)
+        if args.init_generator == "perlin":
+            if args.perlin_init:
+                init = regen_perlin(perlin_mode=args.perlin_mode, device=device, batch_size=args.batch_size, side_x=args.side_x, side_y=args.side_y)
+
+        cond_fn = createCondFn(
+            args, cur_t, diffusion, model_stats, model, secondary_model, lpips_model, normalize, loss_values, init_scale, anim_complete_perc, init, target, device
+        )
+
+        if args.diffusion_sampling_mode == "ddim":
+            samples = diffusion.ddim_sample_loop_progressive(
+                model,
+                (args.batch_size, 3, args.side_y, args.side_x),
+                clip_denoised=args.clip_denoised,
+                model_kwargs={},
+                cond_fn=cond_fn,
+                progress=True,
+                skip_timesteps=skip_steps,
+                init_image=init,
+                randomize_class=args.randomize_class,
+                eta=args.eta,
+            )
+        else:
+            samples = diffusion.plms_sample_loop_progressive(
+                model,
+                (args.batch_size, 3, args.side_y, args.side_x),
+                clip_denoised=args.clip_denoised,
+                model_kwargs={},
+                cond_fn=cond_fn,
+                progress=True,
+                skip_timesteps=skip_steps,
+                init_image=init,
+                randomize_class=args.randomize_class,
+                order=2,
+            )
+
+        # Diffuse Step
+        for j, sample in enumerate(samples):
+            cur_t -= 1
+            intermediateStep = False
+            if args.steps_per_checkpoint is not None:
+                if j % args.steps_per_checkpoint == 0 and j > 0:
+                    intermediateStep = True
+            elif j in args.intermediate_saves:
+                intermediateStep = True
+            percent = math.ceil(j / total_steps * 100)
+            try:
+                if args.dd_bot:
+                    cd = device
+                    smi = f"nvidia-smi --query-gpu=gpu_name,temperature.gpu,utilization.gpu,utilization.memory,memory.used --format=csv,noheader,nounits -i {str(device).split(':')[1]}"
+                    gpustats = subprocess.run(smi.split(" "), stdout=subprocess.PIPE).stdout.decode("utf-8")
+                    r = requests.post(progress_url, data={"percent": percent, "gpustats": gpustats})
+            except Exception as e:
+                logger.error(f"DD Bot error.  Continuing...\n{e}")
+                pass
+            with image_display:
+                if j % args.display_rate == 0 or cur_t == -1 or intermediateStep == True:
+                    for k, image in enumerate(sample["pred_xstart"]):
+                        tqdm.write(f"Batch {i}, step {j}, output {k}:")
+                        # tqdm.write(datetime.now().strftime("%y%m%d-%H%M%S_%f"))
+                        percent = math.ceil(j / total_steps * 100)
+                        if args.n_batches > 0:
+                            # if intermediates are saved to the subfolder, don't append a step or percentage to the name
+                            if cur_t == -1 and args.intermediates_in_subfolder is True:
+                                save_num = f"{frame_num:04}" if args.animation_mode != "None" else i
+                                filename = f"{args.batch_name}({args.batchNum})_{save_num}.png"
+                            else:
+                                # If we're working with percentages, append it
+                                if args.steps_per_checkpoint is not None:
+                                    filename = f"{args.batch_name}({args.batchNum})_{i:04}-{percent:02}%.png"
+                                # Or else, iIf we're working with specific steps, append those
+                                else:
+                                    filename = f"{args.batch_name}({args.batchNum})_{i:04}-{j:03}.png"
+                        image = TF.to_pil_image(image.add(1).div(2).clamp(0, 1))
+                        if j % args.display_rate == 0 or cur_t == -1:
+                            # image.save('progress.png')
+                            image.save(f"{args.batchFolder}/progress.png")
+                            try:
+                                if args.dd_bot:
+                                    files = {"file": open(f"{args.batchFolder}/progress.png", "rb")}
+                                    logger.info("Uploaded progress.png...")
+                                    r = requests.post(preview_url, files=files)
+                            except:
+                                logger.error("DD Bot error.  Continuing...")
+                                pass
+                            # prints output on console.
+                            if is_in_notebook():
+                                display.clear_output(wait=True)
+                                display.display(image)
+                            display.clear_output(wait=True)  # temp fix
+                            display.display(image)  # temp fix
+                            if args.console_preview:
+                                output = climage.convert(
+                                    f"{args.batchFolder}/progress.png",
+                                    width=args.console_preview_width,
+                                )
+                                tqdm.write(output)
+                        if args.steps_per_checkpoint is not None:
+                            if j % args.steps_per_checkpoint == 0 and j > 0:
+                                if args.intermediates_in_subfolder is True:
+                                    image.save(f"{args.partialFolder}/{filename}")
+                                else:
+                                    image.save(f"{args.batchFolder}/{filename}")
+                        else:
+                            if j in args.intermediate_saves:
+                                if args.intermediates_in_subfolder is True:
+                                    image.save(f"{args.partialFolder}/{filename}")
+                                else:
+                                    image.save(f"{args.batchFolder}/{filename}")
+                        if cur_t == -1:
+                            logger.info("Image render completed.")
+                            if frame_num == 0:
+                                save_settings(
+                                    args,
+                                    batchFolder=args.batchFolder,
+                                    batch_name=args.batch_name,
+                                    batchNum=args.batchNum,
+                                )
+                            if args.animation_mode != "None":
+                                # image.save("prevFrame.png")
+                                image.save(f"{args.batchFolder}/prevFrame.png")
+                            image_name = f"{args.batchFolder}/{filename}"
+                            if args.save_metadata == True:
+                                logger.info("Tagging PNG with metadata.")
+                                metadata = PngInfo()
+                                metadata.add_text("dd_args", json.dumps(sanitize(args)))
+                                image.save(image_name, pnginfo=metadata)
+                            else:
+                                image.save(image_name)
+
+                            logger.info(f"Image saved to '{image_name}'")
+                            # dbcon = getDB(args.db)
+                            # if (dbcon) != None:
+                            #     sql = """
+                            #        INSERT INTO images (job_uuid, timestamp, image_path, image)
+                            #        VALUES (?, ?, ?, ?)
+                            #     """
+                            #     logger.debug(sql)
+                            #     dbcon.execute(sql, (args.uuid, time.time(), image_name, convertToBinaryData(image_name)))
+                            #     dbcon.commit()
+                            #     dbcon.close()
+                            # else:
+                            #     logger.debug("No database specified.  Skipping DB update...")
+
+                            if args.animation_mode == "3D":
+                                # If turbo, save a blended image
+                                if args.turbo_mode and frame_num > 0:
+                                    # Mix new image with prevFrameScaled
+                                    blend_factor = (1) / int(args.turbo_steps)
+                                    # newFrame = cv2.imread("prevFrame.png")  # This is already updated..
+                                    newFrame = cv2.imread(f"{args.batchFolder}/prevFrame.png")
+                                    prev_frame_warped = cv2.imread("prevFrameScaled.png")
+                                    blendedImage = cv2.addWeighted(
+                                        newFrame,
+                                        blend_factor,
+                                        prev_frame_warped,
+                                        (1 - blend_factor),
+                                        0.0,
+                                    )
+                                    cv2.imwrite(
+                                        f"{args.batchFolder}/{filename}",
+                                        blendedImage,
+                                    )
+                                else:
+                                    image.save(f"{args.batchFolder}/{filename}")
+
+                                if args.vr_mode:
+                                    generate_eye_views(
+                                        args.TRANSLATION_SCALE,
+                                        args.batchFolder,
+                                        filename,
+                                        frame_num,
+                                        midas_model,
+                                        midas_transform,
+                                        vr_eye_angle=args.vr_eye_angle,
+                                        vr_ipd=args.vr_ipd,
+                                        device=device,
+                                        args=args,
+                                    )
+
+                            # if frame_num != args.max_frames-1:
+                            #   display.clear_output()
+
+        # plt.plot(np.array(loss_values), 'r')
+    # end disco
+
+
+def createCondFn(args, cur_t, diffusion, model_stats, model, secondary_model, lpips_model, normalize, loss_values, init_scale, anim_complete_perc, init, target, device):
+    def cond_fn(x, t, y=None):
+        with torch.enable_grad():
+            x_is_NaN = False
+            x = x.detach().requires_grad_()
+            n = x.shape[0]
+            if args.use_secondary_model is True:
+                alpha = torch.tensor(
+                    diffusion.sqrt_alphas_cumprod[cur_t],
+                    device=device,
+                    dtype=torch.float32,
+                )
+                sigma = torch.tensor(
+                    diffusion.sqrt_one_minus_alphas_cumprod[cur_t],
+                    device=device,
+                    dtype=torch.float32,
+                )
+                cosine_t = alpha_sigma_to_t(alpha, sigma)
+                out = secondary_model(x, cosine_t[None].repeat([n])).pred
+                fac = diffusion.sqrt_one_minus_alphas_cumprod[cur_t]
+                x_in = out * fac + x * (1 - fac)
+                x_in_grad = torch.zeros_like(x_in)
+            else:
+                my_t = torch.ones([n], device=device, dtype=torch.long) * cur_t
+                out = diffusion.p_mean_variance(model, x, my_t, clip_denoised=False, model_kwargs={"y": y})
+                fac = diffusion.sqrt_one_minus_alphas_cumprod[cur_t]
+                x_in = out["pred_xstart"] * fac + x * (1 - fac)
+                x_in_grad = torch.zeros_like(x_in)
+            for model_stat in model_stats:
+                for i in range(args.cutn_batches):
+                    t_int = int(t.item()) + 1  # errors on last step without +1, need to find source
+                    # when using SLIP Base model the dimensions need to be hard coded to avoid AttributeError: 'VisionTransformer' object has no attribute 'input_resolution'
+                    try:
+                        input_resolution = model_stat["clip_model"].visual.input_resolution
+                    except:
+                        input_resolution = 224
+
+                    cuts = MakeCutoutsDango(
+                        input_resolution,
+                        args=args,
+                        Overview=eval(args.cut_overview)[1000 - t_int],
+                        InnerCrop=eval(args.cut_innercut)[1000 - t_int],
+                        IC_Size_Pow=args.cut_ic_pow,
+                        IC_Grey_P=eval(args.cut_icgray_p)[1000 - t_int],
+                    )
+                    clip_in = normalize(cuts(x_in.add(1).div(2)))
+                    image_embeds = model_stat["clip_model"].encode_image(clip_in).float()
+                    dists = spherical_dist_loss(
+                        image_embeds.unsqueeze(1),
+                        model_stat["target_embeds"].unsqueeze(0),
+                    )
+                    dists = dists.view(
+                        [
+                            eval(args.cut_overview)[1000 - t_int] + eval(args.cut_innercut)[1000 - t_int],
+                            n,
+                            -1,
+                        ]
+                    )
+                    losses = dists.mul(model_stat["weights"]).sum(2).mean(0)
+                    loss_values.append(losses.sum().item())  # log loss, probably shouldn't do per cutn_batch
+                    x_in_grad += torch.autograd.grad(losses.sum() * args.clip_guidance_scale, x_in)[0] / args.cutn_batches
+            tv_losses = tv_loss(x_in)
+            if args.use_secondary_model is True:
+                range_losses = range_loss(out)
+            else:
+                range_losses = range_loss(out["pred_xstart"])
+            sat_losses = torch.abs(x_in - x_in.clamp(min=-1, max=1)).mean()
+            loss = tv_losses.sum() * args.tv_scale + range_losses.sum() * args.range_scale + sat_losses.sum() * args.sat_scale
+
+            if init is not None and init_scale:
+                init_losses = lpips_model(x_in, init)
+                loss = loss + init_losses.sum() * init_scale
+
+            if target is not None and args.target_scale:
+                target_losses = lpips_model(x_in, target)
+                loss = loss + target_losses.sum() * args.target_scale * anim_complete_perc**2
+
+            symmetry_switch = 100.0 * (1.0 - (args.symmetry_switch / args.steps))
+            v_symmetry_switch = 100.0 * (1.0 - (args.v_symmetry_switch / args.steps))
+            if args.symmetry_loss:
+                logger.info(f"Symmetry ends at {100-symmetry_switch}%")
+            if args.v_symmetry_loss:
+                logger.info(f"Vertical Symmetry ends at {100-v_symmetry_switch}%")
+
+            if args.symmetry_loss and np.array(t.cpu())[0] > 10 * symmetry_switch:
+                sloss = symm_loss(x_in, lpips_model)
+                loss = loss + sloss.sum() * args.symmetry_loss_scale
+
+            if args.v_symmetry_loss and np.array(t.cpu())[0] > 10 * v_symmetry_switch:
+                sloss = v_symm_loss(x_in, lpips_model)
+                loss = loss + sloss.sum() * args.v_symmetry_loss_scale
+
+            x_in_grad += torch.autograd.grad(loss, x_in)[0]
+            if torch.isnan(x_in_grad).any() == False:
+                grad = -torch.autograd.grad(x_in, x, x_in_grad)[0]
+            else:
+                logger.debug("NaN'd")
+                x_is_NaN = True
+                grad = torch.zeros_like(x)
+        if args.clamp_grad and x_is_NaN == False:
+            magnitude = grad.square().mean().sqrt()
+            return grad * magnitude.clamp(max=args.clamp_max) / magnitude  # min=-0.02, min=-clamp_max,
+        return grad
+
+    return cond_fn
 
 
 def createVideo(args):
@@ -2105,11 +2352,11 @@ def prepareDB(db=None):
 
 
 def dbexec(dbcon=None, sql=None):
-    pass
     # if dbcon != None:
     #     logger.debug(sql)
     #     dbcon.execute(sql)
     #     dbcon.commit()
+    pass
 
 
 def start_run(pargs=None, folders=None, device=None, is_colab=False):
@@ -2245,16 +2492,6 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         ):
             batchNum += 1
 
-    logfile = f"{folders.batch_folder}/{pargs.batch_name}({batchNum}).log"
-    logger.configure(
-        handlers=[
-            {"sink": sys.stdout, "level": "INFO"},
-            {"sink": logfile, "level": "DEBUG"},
-        ]
-    )
-    logger.info(f"Logger switched to '{logfile}' logfile.")
-    logger.info(f"Running session '{session_id}' job '{pargs.uuid}'...")
-
     seed = -1
     if pargs.set_seed == "random_seed":
         random.seed()
@@ -2331,7 +2568,6 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         "padding_mode": pargs.padding_mode,
         "sampling_mode": pargs.sampling_mode,
         "frames_scale": pargs.frames_scale,
-        "calc_frames_skip_steps": calc_frames_skip_steps,
         "skip_step_ratio": skip_step_ratio,
         "calc_frames_skip_steps": calc_frames_skip_steps,
         "image_prompts": pargs.image_prompts,
@@ -2389,7 +2625,7 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
     # args = SimpleNamespace(**args)
     args = pydot(args)  # Thx Zippy
     try:
-        do_run(args=args, device=device, is_colab=is_colab, batchNum=batchNum, start_frame=start_frame, folders=folders)
+        do_run(args=args, device=device, is_colab=is_colab, batchNum=batchNum, folders=folders)
     except KeyboardInterrupt:
         logger.warning("🛑 Batch run interrupted by user.")
         if not args.per_job_kills:
@@ -2454,10 +2690,6 @@ def is_in_notebook():
     True  # Temp fix
     rstk = traceback.extract_stack(limit=1)[0]
     return rstk[0].startswith("<ipython")
-
-
-def fix_later():
-    logger.warning("Gotta parse Notebook Args")
 
 
 def sendSMS(message, args):
