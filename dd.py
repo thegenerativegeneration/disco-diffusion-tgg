@@ -65,6 +65,14 @@ from ipywidgets import Output
 import argparse
 
 
+def free_mem(cuda_device):
+    logger.info(f"Clearing CUDA cache on {cuda_device}...")
+    # https://discuss.pytorch.org/t/out-of-memory-when-i-use-torch-cuda-empty-cache/57898/3
+    with torch.cuda.device(cuda_device):
+        gc.collect()
+        torch.cuda.empty_cache()
+
+
 def str2bool(v):
     if isinstance(v, bool):
         return v
@@ -1175,8 +1183,7 @@ def clipLoad(model_name, device):
 
 
 def do_run(args=None, device=None, is_colab=False, batchNum=None, folders=None):
-    gc.collect()
-    torch.cuda.empty_cache()
+    free_mem(args.cuda_device)
     try:
         logger.info(f"💻 Starting Run: {args.batch_name}({batchNum}) at frame {args.start_frame}")
 
@@ -1636,7 +1643,6 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, diff
                 args.text_prompts = prompts_series
                 args.images_out = "images_out"
                 args.init_images = "init_images"
-                w_h = [1280, 768]
                 folders = setupFolders(pargs=args, PROJECT_DIR=os.getcwd())
                 args.batchFolder = folders.batch_folder
                 args.batchNum = 0
@@ -1644,9 +1650,12 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, diff
                 disco(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusion, secondary_model, lpips_model, model, midas_model, midas_transform, device)
                 e = time.time()
                 duration = e - s
-                files = {"file": open(f"{folders.batch_folder}/{uuid}(0)_0.png", "rb")}
+                fn = f"{folders.batch_folder}/{uuid}(0)_0.png"
+                url = f"{args.dd_bot_url}/upload/{args.dd_bot_agentname}/{uuid}"
+                files = {"file": open(fn, "rb")}
                 values = {"duration": duration}
-                r = requests.post(f"{args.dd_bot_url}/upload/{args.dd_bot_agentname}/{uuid}", files=files, data=values)
+                logger.info(f"🌍 Uploading {fn} to {url}...")
+                r = requests.post(url, files=files, data=values)
                 dump(args.todict(), open(f"configs/{uuid}_gen.yaml", "w"))
                 try:
                     files = {"file": open(f"{folders.batch_folder}/{uuid}(0).log", "rb")}
@@ -1675,7 +1684,13 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, diff
 
 
 def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusion, secondary_model, lpips_model, model, midas_model, midas_transform, device):
-    logger.info(args)
+    # Get corrected sizes
+    args.side_x = (args.width_height[0] // 64) * 64
+    args.side_y = (args.width_height[1] // 64) * 64
+    if args.side_x != args.width_height[0] or args.side_y != args.width_height[1]:
+        logger.warning(f"Changing output size to {args.side_x}x{args.side_y}. Dimensions must by multiples of 64.")
+
+    # logger.info(args)
     if not args.resume_run:
         batchNum = len(glob(folders.batch_folder + "/*.txt"))
 
@@ -1871,8 +1886,7 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusi
         if is_in_notebook():
             display.display(image_display)
         display.display(image_display)  # temp fix
-        gc.collect()
-        torch.cuda.empty_cache()
+        free_mem(args.cuda_device)
         cur_t = diffusion.num_timesteps - skip_steps - 1
         total_steps = cur_t
 
@@ -1930,6 +1944,7 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, diffusi
                     cd = device
                     smi = f"nvidia-smi --query-gpu=gpu_name,temperature.gpu,utilization.gpu,utilization.memory,memory.used --format=csv,noheader,nounits -i {str(device).split(':')[1]}"
                     gpustats = subprocess.run(smi.split(" "), stdout=subprocess.PIPE).stdout.decode("utf-8")
+                    # logger.info(f"🌍 Updating progress to {progress_url}")
                     r = requests.post(progress_url, data={"percent": percent, "gpustats": gpustats})
             except Exception as e:
                 logger.error(f"DD Bot error.  Continuing...\n{e}")
@@ -2395,19 +2410,13 @@ def start_run(pargs=None, folders=None, device=None, is_colab=False):
         logger.warning(f"🛑 Session {session_id} interrupted by user.")
         sendSMS(f"🛑 Session {session_id} aborted!", pargs)
     finally:
-        gc.collect()
-        torch.cuda.empty_cache()
+        free_mem(pargs.cuda_device)
 
 
 def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_id="N/A"):
     TRANSLATION_SCALE = 1.0 / 200.0
     videoFramesFolder = None
     partialFolder = None
-    # Get corrected sizes
-    side_x = (pargs.width_height[0] // 64) * 64
-    side_y = (pargs.width_height[1] // 64) * 64
-    if side_x != pargs.width_height[0] or side_y != pargs.width_height[1]:
-        logger.warning(f"Changing output size to {side_x}x{side_y}. Dimensions must by multiples of 64.")
 
     if pargs.animation_mode == "Video Input":
         videoFramesFolder = f"{folders.batch_folder}/videoFrames"
@@ -2547,8 +2556,8 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         "init_scale": pargs.init_scale,
         "target_scale": pargs.target_scale,
         "skip_steps": pargs.skip_steps,
-        "side_x": side_x,
-        "side_y": side_y,
+        # "side_x": side_x,
+        # "side_y": side_y,
         "animation_mode": pargs.animation_mode,
         "video_init_path": pargs.video_init_path,
         "extract_nth_frame": pargs.extract_nth_frame,
@@ -2637,8 +2646,7 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
             raise KeyboardInterrupt
         pass
     finally:
-        gc.collect()
-        torch.cuda.empty_cache()
+        free_mem(args.cuda_device)
 
     if pargs.animation_mode != "None":
         if pargs.skip_video_for_run_all == True:
