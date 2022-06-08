@@ -37,19 +37,17 @@ RUN chmod a+rw /workspace
 RUN useradd -ms /bin/bash disco
 USER disco
 
-ARG REPO=https://github.com/entmike/disco-diffusion-1.git
-ARG DD_VERSION=2.2
-
 ADD docker-requirements.txt docker-requirements.txt
 
 RUN pip install -r docker-requirements.txt
 
 ENV TORCH_HOME=/workspace/disco-diffusion-1/models
 ADD welcome-banner.txt /home/disco/welcome-banner.txt
+ARG REPO=https://github.com/entmike/disco-diffusion-1.git
+ARG BRANCH=main
+ARG DD_VERSION=2.2
 RUN echo 'cat ~/welcome-banner.txt' >> ~/.bashrc
-# Clone Git repositories
-ENV BUILDDATE=June1
-RUN git clone $REPO
+RUN git clone --single-branch --branch $BRANCH $REPO
 WORKDIR /workspace/disco-diffusion-1
 RUN pip install jupyterlab
 RUN echo 'export PATH="$HOME/.local/bin:$HOME/.local/bin/jupyter-lab:$PATH"' >> ~/.bashrc

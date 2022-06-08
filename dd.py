@@ -1479,10 +1479,20 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, diff
     idle_time = 0
     while run == True:
         connected = False
-        url = f"{args.dd_bot_url}/takeorder/{args.dd_bot_agentname}/{idle_time}"
+        url = f"{args.dd_bot_url}/takeorder/{args.dd_bot_agentname}"
         try:
             logger.debug(f"🌎 Checking '{url}'")
-            results = requests.get(url).json()
+            my_model = "default"
+            if args.ViTB32 and args.ViTB16 and args.RN50:
+                my_model = "default"
+            if args.ViTB32 and args.ViTB16 and args.ViTL14:
+                my_model = "vitl14"
+            if args.ViTB32 and args.ViTB16 and args.ViTL14_336:
+                my_model = "vitl14x336"
+            if args.ViTB32 and args.ViTB16 and args.RN50x64:
+                my_model = "rn50x64"
+
+            results = requests.post(url, data={"idle_time": idle_time, "model": my_model}).json()
             if results["success"]:
                 idle_time = 0
                 connected = True
