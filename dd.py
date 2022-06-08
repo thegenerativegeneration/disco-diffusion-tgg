@@ -1675,6 +1675,19 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, seconda
     if args.side_x != args.width_height[0] or args.side_y != args.width_height[1]:
         logger.warning(f"Changing output size to {args.side_x}x{args.side_y}. Dimensions must by multiples of 64.")
 
+    # Create any supporting folders
+    if args.intermediate_saves and args.intermediates_in_subfolder is True:
+        partialFolder = f"{folders.batch_folder}/partials"
+        createPath(partialFolder)
+
+    if args.retain_overwritten_frames is True:
+        retainFolder = f"{folders.batch_folder}/retained"
+        createPath(retainFolder)
+
+    if args.cutout_debug is True:
+        cutoutDebugFolder = f"{folders.batch_folder}/debug"
+        createPath(cutoutDebugFolder)
+
     ### Load Diffusion Model ###
     timestep_respacing = f"ddim{args.steps}"
     diffusion_steps = (1000 // args.steps) * args.steps if args.steps < 1000 else args.steps
@@ -2451,18 +2464,6 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
             steps_per_checkpoint = pargs.steps + 10
     else:
         steps_per_checkpoint = None
-
-    if pargs.intermediate_saves and pargs.intermediates_in_subfolder is True:
-        partialFolder = f"{folders.batch_folder}/partials"
-        createPath(partialFolder)
-
-    if pargs.retain_overwritten_frames is True:
-        retainFolder = f"{folders.batch_folder}/retained"
-        createPath(retainFolder)
-
-    if pargs.cutout_debug is True:
-        cutoutDebugFolder = f"{folders.batch_folder}/debug"
-        createPath(cutoutDebugFolder)
 
     skip_step_ratio = int(pargs.frames_skip_steps.rstrip("%")) / 100
     calc_frames_skip_steps = math.floor(pargs.steps * skip_step_ratio)
