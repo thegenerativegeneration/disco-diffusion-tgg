@@ -350,7 +350,7 @@ class MakeCutoutsDango(nn.Module):
         self.IC_Size_Pow = IC_Size_Pow
         self.IC_Grey_P = IC_Grey_P
         self.cutout_debug = args.cutout_debug
-        self.debug_folder = f"{args.batch_folder}/debug"
+        self.debug_folder = f"{args.batchFolder}/debug"
         if args.animation_mode == "None":
             self.augs = T.Compose(
                 [
@@ -1677,16 +1677,16 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, seconda
 
     # Create any supporting folders
     if args.intermediate_saves and args.intermediates_in_subfolder is True:
-        partialFolder = f"{folders.batch_folder}/partials"
-        createPath(partialFolder)
+        args.partialFolder = f"{folders.batch_folder}/partials"
+        createPath(args.partialFolder)
 
     if args.retain_overwritten_frames is True:
-        retainFolder = f"{folders.batch_folder}/retained"
-        createPath(retainFolder)
+        args.retainFolder = f"{folders.batch_folder}/retained"
+        createPath(args.retainFolder)
 
     if args.cutout_debug is True:
-        cutoutDebugFolder = f"{folders.batch_folder}/debug"
-        createPath(cutoutDebugFolder)
+        args.cutoutDebugFolder = f"{folders.batch_folder}/debug"
+        createPath(args.cutoutDebugFolder)
 
     ### Load Diffusion Model ###
     timestep_respacing = f"ddim{args.steps}"
