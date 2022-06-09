@@ -1520,6 +1520,10 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, seco
                 except:
                     eta = 0.5
                 try:
+                    cutn_batches = int(results["details"]["cutn_batches"])
+                except:
+                    cutn_batches = 4
+                try:
                     render_type = results["details"]["render_type"]
                 except:
                     render_type = "render"
@@ -1619,6 +1623,7 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, seco
                 args.n_batches = 1
                 args.steps = steps
                 args.clamp_max = clamp_max
+                args.cutn_batches = cutn_batches
                 args.eta = eta
                 args.clip_guidance_scale = clip_guidance_scale
                 args.cut_ic_pow = cut_ic_pow
