@@ -69,9 +69,10 @@ import dd_bot
 def free_mem(cuda_device):
     logger.info(f"Clearing CUDA cache on {cuda_device}...")
     # https://discuss.pytorch.org/t/out-of-memory-when-i-use-torch-cuda-empty-cache/57898/3
-    with torch.cuda.device(cuda_device):
-        gc.collect()
-        torch.cuda.empty_cache()
+    # Hotfix: 6/12/22
+    # with torch.cuda.device(cuda_device):
+    #     gc.collect()
+    #     torch.cuda.empty_cache()
 
 
 def str2bool(v):
