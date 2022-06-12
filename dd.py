@@ -1454,7 +1454,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, folders=None):
                 disco(args, folders, frame_num, clip_models, init_scale, skip_steps, secondary_model, lpips_model, midas_model, midas_transform, device)
             else:
                 ## Discord Bot Mode
-                dd_bot.loop(args, folders, frame_num, clip_models, init_scale, skip_steps, secondary_model, lpips_model, midas_model, midas_transform, device)
+                dd_bot.bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, secondary_model, lpips_model, midas_model, midas_transform, device)
     except:
         tb = traceback.format_exc()
         logger.error(tb)

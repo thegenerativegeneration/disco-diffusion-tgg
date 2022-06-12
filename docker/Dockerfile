@@ -45,7 +45,7 @@ ENV TORCH_HOME=/workspace/disco-diffusion-1/models
 ADD welcome-banner.txt /home/disco/welcome-banner.txt
 ARG REPO=https://github.com/entmike/disco-diffusion-1.git
 ARG BRANCH=main
-ARG DD_VERSION=2.2
+ARG DD_VERSION=2.3
 RUN echo 'cat ~/welcome-banner.txt' >> ~/.bashrc
 RUN git clone --single-branch --branch $BRANCH $REPO
 WORKDIR /workspace/disco-diffusion-1
