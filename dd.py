@@ -1178,9 +1178,9 @@ def prepModels(args=None):
     return model_config
 
 
-def clipLoad(model_name, device):
+def clipLoad(model_root, model_name, device):
     logger.info(f"🤖 Loading model '{model_name}'...")
-    model = clip.load(model_name, jit=False, download_root="models")[0].eval().requires_grad_(False).to(device)
+    model = clip.load(model_name, jit=False, download_root=model_root)[0].eval().requires_grad_(False).to(device)
     return model
 
 
@@ -1192,23 +1192,23 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, folders=None):
         ### Load CLIP Model(s) ###
         clip_models = []
         if args.ViTB32 is True:
-            clip_models.append(clipLoad("ViT-B/32", device))
+            clip_models.append(clipLoad(args.model_path, "ViT-B/32", device))
         if args.ViTB16 is True:
-            clip_models.append(clipLoad("ViT-B/16", device))
+            clip_models.append(clipLoad(args.model_path, "ViT-B/16", device))
         if args.ViTL14 is True:
-            clip_models.append(clipLoad("ViT-L/14", device))
+            clip_models.append(clipLoad(args.model_path, "ViT-L/14", device))
         if args.ViTL14_336 is True:
-            clip_models.append(clipLoad("ViT-L/14@336px", device))
+            clip_models.append(clipLoad(args.model_path, "ViT-L/14@336px", device))
         if args.RN50 is True:
-            clip_models.append(clipLoad("RN50", device))
+            clip_models.append(clipLoad(args.model_path, "RN50", device))
         if args.RN50x4 is True:
-            clip_models.append(clipLoad("RN50x4", device))
+            clip_models.append(clipLoad(args.model_path, "RN50x4", device))
         if args.RN50x16 is True:
-            clip_models.append(clipLoad("RN50x16", device))
+            clip_models.append(clipLoad(args.model_path, "RN50x16", device))
         if args.RN50x64 is True:
-            clip_models.append(clipLoad("RN50x64", device))
+            clip_models.append(clipLoad(args.model_path, "RN50x64", device))
         if args.RN101 is True:
-            clip_models.append(clipLoad("RN101", device))
+            clip_models.append(clipLoad(args.model_path, "RN101", device))
 
         ### Load Secondary Model ###
         if args.use_secondary_model:
