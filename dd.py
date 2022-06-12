@@ -2435,4 +2435,65 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
 
     if pargs.animation_mode != "None":
         if pargs.skip_video_for_run_all == True:
-           
+            logger.warning("⚠️ Skipping video creation, uncheck skip_video_for_run_all if you want to run it")
+        else:
+            createVideo(args)
+
+
+def systemDetails(pargs):
+    if pargs.simple_nvidia_smi_display:
+        nvidiasmi_output = subprocess.run(["nvidia-smi", "-L"], stdout=subprocess.PIPE).stdout.decode("utf-8")
+        logger.info(f"🔎 {nvidiasmi_output}")
+    else:
+        nvidiasmi_output = subprocess.run(["nvidia-smi"], stdout=subprocess.PIPE).stdout.decode("utf-8")
+        logger.info(nvidiasmi_output)
+        # nvidiasmi_ecc_note = subprocess.run(["nvidia-smi", "-i", "0"], stdout=subprocess.PIPE).stdout.decode("utf-8")
+        # logger.info(nvidiasmi_ecc_note)
+    if "Tesla T4" in nvidiasmi_output:
+        downgrade_torch_for_t4_res = subprocess.run("pip install torch==1.10.2 torchvision==0.11.3 -q".split(" "), stdout=subprocess.PIPE).stdout.decode("utf-8")
+        logger.info(downgrade_torch_for_t4_res)
+
+
+def getDevice(pargs):
+    import sys
+
+    DEVICE = torch.device(pargs.cuda_device if (torch.cuda.is_available() and not pargs.useCPU) else "cpu")
+    logger.info(f"✅ Using device: {DEVICE}")
+    device = DEVICE  # At least one of the modules expects this name..
+    # Fails if CPU is set
+    if not pargs.useCPU:
+        # V100 and T4 fix thanks to Sami
+        # if pargs.ViTL14 is True or pargs.ViTL14_336 is True and ("V100" in torch.cuda.get_device_name(0) or "T4" in torch.cuda.get_device_name(0)):
+        #     logger.warning(f"⚠️ {torch.cuda.get_device_name(0)} detected as well as ViTL14/ViTL14_336 models.  Pytorch needs to be downgraded to avoid CUDA error...")
+        #     logger.info("📦 Downgrading pytorch...")
+        #     subprocess.run("pip install torch==1.10.2 torchvision==0.11.3 -q".split(" "), stdout=subprocess.PIPE).stdout.decode("utf-8")
+        if torch.cuda.get_device_capability(DEVICE) == (8, 0):  ## A100 fix thanks to Emad
+            logger.info("Disabling CUDNN for A100 gpu", file=sys.stderr)
+            torch.backends.cudnn.enabled = False
+    return device
+
+
+def detectColab():
+    try:
+        from google.colab import drive  # type: ignore
+
+        return True
+    except:
+        return False
+
+
+def is_in_notebook():
+    import traceback
+
+    True  # Temp fix
+    rstk = traceback.extract_stack(limit=1)[0]
+    return rstk[0].startswith("<ipython")
+
+
+def sendSMS(message, args):
+    if args.twilio_account_sid and args.twilio_auth_token and args.twilio_to and args.twilio_from:
+        client = Client(args.twilio_account_sid, args.twilio_auth_token)
+        message = client.messages.create(to=args.twilio_to, from_=args.twilio_from, body=message)
+        logger.info(f"Twilio SMS sent: '{message.sid}'")
+    else:
+        logger.debug("Not sending SMS")
