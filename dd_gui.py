@@ -13,38 +13,20 @@ from IPython.display import display, Markdown
 
 print('Loading, please wait...')
 
-save_models = True #@param {type:"boolean"}
-check_for_updates = True #@param {type:"boolean"}
 content_root = '/content'
-repo = "https://github.com/entmike/disco-diffusion-1" #@param {type:"string"}
-branch = "main" #@param {type:"string"}
 cwd = os.path.abspath('.')
 is_local=True
 
 if is_local: content_root=cwd
 print (f'Current directory: {cwd}')
 
-dd_root = f'{content_root}/disco-diffusion-1'
+dd_root = f'{content_root}'
 
 print(f'✅ Disco Diffusion root path will be "{dd_root}"')
 
 root_path = dd_root
 
-# Clone Repo
-if os.path.isdir(f'{dd_root}') == False:
-  print(f"Cloning repo '{repo}' into '{dd_root}'...")
-  os.chdir(f'{content_root}')
-  subprocess.run(f'git clone {repo}'.split(' '), stdout=subprocess.PIPE).stdout.decode("utf-8")
-
 os.chdir(f'{dd_root}')
-if check_for_updates == True:
-  # Pull any updates
-  print(f'📄 Pulling updates from GitHub...')
-  for cmd in ['git clean -df', f'git checkout {branch}', f'git pull origin {branch}']:
-    gitresults = subprocess.run(f'{cmd}'.split(' '), stdout=subprocess.PIPE).stdout.decode("utf-8")
-    print(f'{gitresults}')
-else:
-  print("⚠️ Skipping checking for Git updates")
 
 
 # Downgrade for T4/V100
@@ -65,10 +47,6 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 # print(dd.is_in_notebook())
 
-# Load Models
-dd.loadModels()
-
-gui_loaded = False
 params = []
 def make_widget(widget, label, checkbox = False):
     params.append({
@@ -574,7 +552,6 @@ button = widgets.Button(
 )
 
 display(button)
-gui_loaded = True
 
 image_display = widgets.Output()
 display(image_display)
@@ -585,35 +562,32 @@ display(out)
 
 def run_dd(button=None):
     with out:
-        if gui_loaded == False:
-            print("Wait until all models are downloaded and the GUI loads before attempting to run!")
-        else:
-            for param in params:
-                argKey = param["key"]
-                args[argKey] = param["widget"].value
+        for param in params:
+            argKey = param["key"]
+            args[argKey] = param["widget"].value
 
-            try:
-                args.text_prompts = json.loads(text_prompts_input.value)
-            except:
-                print('text prompts must be valid json')
+        try:
+            args.text_prompts = json.loads(text_prompts_input.value)
+        except:
+            print('text prompts must be valid json')
 
-            args.width_height = [widthInput.value, heightInput.value]
-     
-            args.set_seed =  set_seed_input.value
+        args.width_height = [widthInput.value, heightInput.value]
+    
+        args.set_seed =  set_seed_input.value
 
-            dd_args.arg_configuration_loader()  # Workaround to do param saving to yaml for now.
-            pargs = args  # Dont run through arg_configuration_loader as it expects CLI.
+        dd_args.arg_configuration_loader()  # Workaround to do param saving to yaml for now.
+        pargs = args  # Dont run through arg_configuration_loader as it expects CLI.
 
-            # Setup folders
-            folders = dd.setupFolders(is_colab=dd.detectColab(), PROJECT_DIR=PROJECT_DIR, pargs=pargs)
+        # Setup folders
+        folders = dd.setupFolders(is_colab=dd.detectColab(), PROJECT_DIR=PROJECT_DIR, pargs=pargs)
 
-            # Report System Details
-            dd.systemDetails(pargs)
+        # Report System Details
+        dd.systemDetails(pargs)
 
-            # Get CUDA Device
-            device = dd.getDevice(pargs)
+        # Get CUDA Device
+        device = dd.getDevice(pargs)
 
-            dd.start_run(pargs=pargs, folders=folders, device=device, is_colab=dd.detectColab())
+        dd.start_run(pargs=pargs, folders=folders, device=device, is_colab=dd.detectColab())
 
 button.on_click(run_dd)
 
