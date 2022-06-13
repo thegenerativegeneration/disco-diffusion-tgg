@@ -1294,6 +1294,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, folders=None):
                 batchBar.n = frame_num
                 batchBar.refresh()
             args.target_image = None  # test
+            skip_steps = args.skip_steps
             # Inits if not video frames
             if args.animation_mode != "Video Input":
                 if args.init_image in ["", "None", "none", "NONE"]:
