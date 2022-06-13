@@ -1509,6 +1509,7 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, seconda
     if model_config["use_fp16"]:
         model.convert_to_fp16()
 
+    batchNum = 0
     # logger.info(args)
     if not args.resume_run:
         batchNum = len(glob(folders.batch_folder + "/*.txt"))
