@@ -1533,6 +1533,7 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, seconda
         std=[0.26862954, 0.26130258, 0.27577711],
     )
 
+    progress_url, preview_url = None, None
     if args.dd_bot:
         progress_url = f"{args.dd_bot_url}/progress/{args.dd_bot_agentname}/{args.batch_name}"
         preview_url = f"{args.dd_bot_url}/preview/{args.dd_bot_agentname}/{args.batch_name}"
