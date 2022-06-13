@@ -1210,6 +1210,7 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, folders=None):
             clip_models.append(clipLoad(args.model_path, "RN101", device))
 
         ### Load Secondary Model ###
+        secondary_model = None
         if args.use_secondary_model:
             logger.info("🤖 Loading secondary model...")
             secondary_model = SecondaryDiffusionImageNet2()
