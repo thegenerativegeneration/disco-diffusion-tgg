@@ -69,9 +69,9 @@ import dd_bot
 def free_mem(cuda_device):
     logger.info(f"Clearing CUDA cache on {cuda_device}...")
     # https://discuss.pytorch.org/t/out-of-memory-when-i-use-torch-cuda-empty-cache/57898/3
-    with torch.cuda.device(cuda_device):
-        gc.collect()
-        torch.cuda.empty_cache()
+    # with torch.cuda.device(cuda_device):
+    #     gc.collect()
+    #     torch.cuda.empty_cache()
 
 
 def str2bool(v):
@@ -2021,9 +2021,32 @@ def createVideo(args):
     image_path = f"{args.batchFolder}/({run})_%04d.png"
     filepath = f"{args.batchFolder}({run}).mp4"
 
-    cmd = f"ffmpeg -y -vcodec png -r {str(fps)} -start_number {str(init_frame)} -i {image_path} -frames:v {str(last_frame + 1)} -c:v libx264 -vf fps={fps} -pix_fmt yuv420p -crf 17 -preset veryslow {filepath}"
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-vcodec",
+        "png",
+        "-r",
+        str(fps),
+        "-start_number",
+        str(init_frame),
+        "-i",
+        image_path,
+        "-frames:v",
+        str(last_frame + 1),
+        "-c:v",
+        "libx264",
+        "-vf",
+        f"fps={fps}",
+        "-pix_fmt",
+        "yuv420p",
+        "-crf",
+        "17",
+        "-preset" "veryslow",
+        filepath,
+    ]
     try:
-        process = subprocess.Popen(cmd.split(" "), cwd=f"{args.batchFolder}", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(cmd, cwd=f"{args.batchFolder}", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         if process.returncode != 0:
             logger.error(stderr)
