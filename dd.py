@@ -1520,14 +1520,14 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, seconda
         or os.path.isfile(f"{folders.batch_folder}/{args.batch_name}-{batchNum}_settings.txt") is True
     ):
         batchNum += 1
-    logfile = f"{folders.batch_folder}/{args.batch_name}({batchNum}).log"
-    logger.configure(
-        handlers=[
-            {"sink": sys.stdout, "level": "INFO"},
-            {"sink": logfile, "level": "DEBUG"},
-        ]
-    )
-    logger.info(f"Logger switched to '{logfile}' logfile.")
+    # logfile = f"{folders.batch_folder}/{args.batch_name}({batchNum}).log"
+    # logger.configure(
+    #     handlers=[
+    #         {"sink": sys.stdout, "level": "INFO"},
+    #         {"sink": logfile, "level": "DEBUG"},
+    #     ]
+    # )
+    # logger.info(f"Logger switched to '{logfile}' logfile.")
     logger.info(f"Running job '{args.uuid}'...")
     normalize = T.Normalize(
         mean=[0.48145466, 0.4578275, 0.40821073],
