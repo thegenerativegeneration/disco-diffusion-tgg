@@ -2402,7 +2402,7 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         "cut_icgray_p": pargs.cut_icgray_p,
         "intermediate_saves": pargs.intermediate_saves,
         "intermediates_in_subfolder": pargs.intermediates_in_subfolder,
-        "steps_per_checkpoint": steps_per_checkpoint,
+        "steps_per_checkpoint": None,
         "perlin_init": pargs.perlin_init,
         "perlin_mode": pargs.perlin_mode,
         "set_seed": pargs.set_seed,
