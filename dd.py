@@ -1579,7 +1579,7 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, seconda
 
         for prompt in frame_prompt:
             txt, weight = parse_prompt(prompt)
-            txt = clip_model.encode_text(clip.tokenize(prompt).to(device)).float()
+            txt = clip_model.encode_text(clip.tokenize(prompt, truncate=True).to(device)).float()
 
             if args.fuzzy_prompt:
                 for i in range(25):
