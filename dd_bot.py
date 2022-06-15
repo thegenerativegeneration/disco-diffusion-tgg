@@ -11,8 +11,9 @@ from yaml import dump, full_load
 
 def upload_progress(preview_url, args):
     try:
-        files = {"file": open(f"{args.batchFolder}/progress.png", "rb")}
-        logger.info("Uploaded progress.png...")
+        fn = f"{args.batchFolder}/progress.png"
+        files = {"file": open(fn, "rb")}
+        logger.info(f"Uploaded {fn}...")
         r = requests.post(preview_url, files=files)
     except:
         logger.error("DD Bot error.  Continuing...")
@@ -232,7 +233,7 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, seco
                 r = requests.post(url, files=files, data=values)
                 dump(args.todict(), open(f"configs/{uuid}_gen.yaml", "w"))
                 try:
-                    files = {"file": open(f"{folders.batch_folder}/{uuid}(0).log", "rb")}
+                    files = {"file": open(f"{folders.batch_folder}/{uuid}(0)_0.log", "rb")}
                     r = requests.post(f"{args.dd_bot_url}/uploadlog/{args.dd_bot_agentname}/{uuid}", files=files, data=values)
                     files = {"file": open(f"configs/{uuid}_gen.yaml", "rb")}
                     r = requests.post(f"{args.dd_bot_url}/uploadconfig/{args.dd_bot_agentname}/{uuid}", files=files, data=values)
