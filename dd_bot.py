@@ -19,16 +19,29 @@ def upload_progress(preview_url, args):
         pass
 
 
-def update_progress(progress_url, percent, device):
-    try:
-        cd = device
-        smi = f"nvidia-smi --query-gpu=gpu_name,temperature.gpu,utilization.gpu,utilization.memory,memory.used --format=csv,noheader,nounits -i {str(device).split(':')[1]}"
-        gpustats = subprocess.run(smi.split(" "), stdout=subprocess.PIPE).stdout.decode("utf-8")
-        # logger.info(f"🌍 Updating progress to {progress_url}")
-        r = requests.post(progress_url, data={"percent": percent, "gpustats": gpustats})
-    except Exception as e:
-        logger.error(f"DD Bot error.  Continuing...\n{e}")
-        pass
+def update_progress(progress_url, percent, device, prev_ts):
+    n = time.time()
+    update = True
+    if prev_ts:
+        duration = n - prev_ts
+        if duration < 15:
+            update = False
+    else:
+        prev_ts = n
+
+    if update:
+        try:
+            cd = device
+            smi = f"nvidia-smi --query-gpu=gpu_name,temperature.gpu,utilization.gpu,utilization.memory,memory.used --format=csv,noheader,nounits -i {str(device).split(':')[1]}"
+            gpustats = subprocess.run(smi.split(" "), stdout=subprocess.PIPE).stdout.decode("utf-8")
+            # logger.info(f"🌍 Updating progress to {progress_url}")
+            r = requests.post(progress_url, data={"percent": percent, "gpustats": gpustats})
+        except Exception as e:
+            logger.error(f"DD Bot error.  Continuing...\n{e}")
+            pass
+        return n
+    else:
+        return prev_ts
 
 
 def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, secondary_model, lpips_model, midas_model, midas_transform, device):

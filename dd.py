@@ -1752,6 +1752,7 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, seconda
             )
 
         # Diffuse Step
+        prev_ts = None
         for j, sample in enumerate(samples):
             cur_t -= 1
             intermediateStep = False
@@ -1762,7 +1763,7 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, seconda
                 intermediateStep = True
             percent = math.ceil(j / total_steps * 100)
             if args.dd_bot:
-                dd_bot.update_progress(progress_url, percent, device)
+                prev_ts = dd_bot.update_progress(progress_url, percent, device, prev_ts)
             with image_display:
                 if j % args.display_rate == 0 or cur_t == -1 or intermediateStep == True:
                     for k, image in enumerate(sample["pred_xstart"]):
@@ -1771,8 +1772,8 @@ def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, seconda
                         percent = math.ceil(j / total_steps * 100)
                         if args.n_batches > 0:
                             # if intermediates are saved to the subfolder, don't append a step or percentage to the name
+                            save_num = f"{frame_num:04}" if args.animation_mode != "None" else i
                             if cur_t == -1 and args.intermediates_in_subfolder is True:
-                                save_num = f"{frame_num:04}" if args.animation_mode != "None" else i
                                 filename = f"{args.batch_name}({batchNum})_{save_num}.png"
                             else:
                                 # If we're working with percentages, append it
