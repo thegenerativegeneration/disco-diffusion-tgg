@@ -68,6 +68,8 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, seco
                 my_model = "vitl14x336"
             if args.ViTB32 and args.ViTB16 and args.RN50x64:
                 my_model = "rn50x64"
+            if args.ViTB32 and args.ViTB16 and args.RN50x64 and args.ViTL14_336:
+                my_model = "ludicrous"
 
             results = requests.post(url, data={"idle_time": idle_time, "model": my_model}).json()
             if results["success"]:
