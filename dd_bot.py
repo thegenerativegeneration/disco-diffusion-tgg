@@ -181,6 +181,8 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, seco
                         w_h = [512, 512]
                     if shape == "pano":
                         w_h = [1024, 256]
+                    if shape == "skyscraper":
+                        w_h = [256, 1024]
                     if shape == "tiny-square":
                         w_h = [256, 256]
                 else:
@@ -192,6 +194,8 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, seco
                         w_h = [1024, 1024]
                     if shape == "pano":
                         w_h = [2048, 512]
+                    if shape == "skyscraper":
+                        w_h = [512, 2048]
                     if shape == "tiny-square":
                         w_h = [512, 512]
 
