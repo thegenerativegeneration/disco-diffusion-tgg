@@ -527,9 +527,21 @@ cuda_device = make_widget(widgets.Text(value="cuda:0", disabled=False), "cuda_de
 
 set_seed_input = widgets.Text(value="random_seed", disabled=False)
 
-set_seed = make_widget(set_seed_input, "set_seed")
+seed_value_input = widgets.IntText(value=10548465, disabled=False)
 
-basic_tab = widgets.VBox([text_prompts, steps, height, width, set_seed, cuda_device])
+seed_type = make_widget(
+    widgets.Dropdown(
+        options=["random_seed", "incremental_seed", "static_seed"],
+        value="incremental_seed",
+        disabled=False,
+    ),
+    "seed_type",
+)
+
+set_seed = make_widget(set_seed_input, "set_seed")
+seed_value = make_widget(seed_value_input, "seed_value")
+
+basic_tab = widgets.VBox([text_prompts, steps, height, width, seed_value, seed_type, cuda_device])
 model_tab = widgets.VBox(
     [RN50, RN101, RN50x64, RN50x16, RN50x4, ViTB16, ViTB32, ViTL14, ViTL14_336, use_secondary_model, diffusion_model, diffusion_sampling_mode, randomize_class]
 )
@@ -541,21 +553,7 @@ titles = ["Basic Options", "Model", "Clip", "Symmetry", "Preview", "Init Image",
 [tab.set_title(i, title) for i, title in enumerate(titles)]
 display(tab)
 
-button = widgets.Button(
-    description="Start Run", disabled=False, button_style="success", icon="check"  # 'success', 'info', 'warning', 'danger' or ''  # (FontAwesome names without the `fa-` prefix)
-)
-
-display(button)
-
-image_display = widgets.Output()
-display(image_display)
-
-out = widgets.Output(layout={"border": "1px solid black"})
-
-display(out)
-
-
-def run_dd(button=None):
+def run_dd(out):
     with out:
         for param in params:
             argKey = param["key"]
@@ -584,5 +582,3 @@ def run_dd(button=None):
 
         dd.start_run(pargs=pargs, folders=folders, device=device, is_colab=dd.detectColab())
 
-
-button.on_click(run_dd)
