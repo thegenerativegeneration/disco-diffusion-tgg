@@ -531,7 +531,7 @@ seed_value_input = widgets.IntText(value=10548465, disabled=False)
 
 seed_type = make_widget(
     widgets.Dropdown(
-        options=["random_seed", "incremental_seed"],
+        options=["random_seed", "incremental_seed", "static_seed"],
         value="incremental_seed",
         disabled=False,
     ),

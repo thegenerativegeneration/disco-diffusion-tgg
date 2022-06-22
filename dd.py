@@ -2319,11 +2319,8 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
             batchNum += 1
 
     seed = -1
-    if pargs.set_seed == 'incremental_seed':
-        frame = len(glob(folders.batch_folder+f"/{pargs.batch_name}({batchNum})*.png"))
-        seed = pargs.seed_value + int(frame)
-        logger.info(f"🌱 Incremental seeding starting with seed: {seed}")
-    elif pargs.seed_type == 'incremental_seed':
+
+    if pargs.seed_type == 'incremental_seed':
         logger.info(folders)
         logger.info(pargs.batch_name)
         frame = len(glob(folders.batch_folder+f"/{pargs.batch_name}({batchNum})*.png"))
@@ -2333,6 +2330,13 @@ def processBatch(pargs=None, folders=None, device=None, is_colab=False, session_
         random.seed()
         seed = random.randint(0, 2**32)
         logger.info(f"🌱 Randomly using seed: {seed}")
+    elif pargs.seed_type == "static_seed":
+        seed = int(pargs.seed_value)
+        logger.info(f"🌱 Using static seed: {seed}")
+    elif pargs.set_seed == 'incremental_seed':
+        frame = len(glob(folders.batch_folder+f"/{pargs.batch_name}({batchNum})*.png"))
+        seed = pargs.seed_value + int(frame)
+        logger.info(f"🌱 Incremental seeding starting with seed: {seed}")
     elif pargs.set_seed == "random_seed":
         random.seed()
         seed = random.randint(0, 2**32)
