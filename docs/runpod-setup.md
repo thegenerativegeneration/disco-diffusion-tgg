@@ -40,4 +40,4 @@
 
 ## Notes
 
-Unlike the Lambda Labs guide, at this point you do NOT have to type `sudo docker ...` commands.  All commands simply begin with `python discord.py` followed by any command-line arguments you wish to pass (or `--config_file=path/to/your/config.yaml`) for YAML args.
+Unlike the Lambda Labs guide, at this point you do NOT have to type `sudo docker ...` commands.  All commands simply begin with `python disco.py` followed by any command-line arguments you wish to pass (or `--config_file=path/to/your/config.yaml`) for YAML args.

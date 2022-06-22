@@ -1,0 +1,1 @@
+docker build -t entmike-disco-diffusion-1 --build-arg BRANCH=main .

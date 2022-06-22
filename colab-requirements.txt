@@ -16,3 +16,4 @@ loguru
 deepdiff
 twilio
 markdown2
+torchmetrics

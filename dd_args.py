@@ -140,7 +140,7 @@ def parse(a=None):
     parser.add_argument("--max_frames", help="Max Frames", type=int, default=gp("max_frames", 10000), required=False)
     parser.add_argument("--interp_spline", help="Interp Spline", default=gp("interp_spline", "Linear"), choices=["Linear", "Quadratic", "Cubic"], required=False)
     parser.add_argument("--angle", help="Angle", default=gp("angle", "0:(0)"), required=False)
-    parser.add_argument("--zoom", help="Zoom", default=gp("zoom", '"0: (1), 10: (1.05)'), required=False)
+    parser.add_argument("--zoom", help="Zoom", default=gp("zoom", '"0: (1), 10: (1.05)"'), required=False)
     parser.add_argument("--translation_x", help="Translation X", default=gp("translation_x", "0: (0)"), required=False)
     parser.add_argument("--translation_y", help="Translation Y", default=gp("translation_y", "0: (0)"), required=False)
     parser.add_argument("--translation_z", help="Translation Z", default=gp("translation_z", "0: (10.0)"), required=False)
