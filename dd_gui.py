@@ -541,21 +541,7 @@ titles = ["Basic Options", "Model", "Clip", "Symmetry", "Preview", "Init Image",
 [tab.set_title(i, title) for i, title in enumerate(titles)]
 display(tab)
 
-button = widgets.Button(
-    description="Start Run", disabled=False, button_style="success", icon="check"  # 'success', 'info', 'warning', 'danger' or ''  # (FontAwesome names without the `fa-` prefix)
-)
-
-display(button)
-
-image_display = widgets.Output()
-display(image_display)
-
-out = widgets.Output(layout={"border": "1px solid black"})
-
-display(out)
-
-
-def run_dd(button=None):
+def run_dd(out):
     with out:
         for param in params:
             argKey = param["key"]
@@ -584,5 +570,3 @@ def run_dd(button=None):
 
         dd.start_run(pargs=pargs, folders=folders, device=device, is_colab=dd.detectColab())
 
-
-button.on_click(run_dd)
