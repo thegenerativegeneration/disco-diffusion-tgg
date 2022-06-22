@@ -527,9 +527,21 @@ cuda_device = make_widget(widgets.Text(value="cuda:0", disabled=False), "cuda_de
 
 set_seed_input = widgets.Text(value="random_seed", disabled=False)
 
-set_seed = make_widget(set_seed_input, "set_seed")
+seed_value_input = widgets.IntText(value=10548465, disabled=False)
 
-basic_tab = widgets.VBox([text_prompts, steps, height, width, set_seed, cuda_device])
+seed_type = make_widget(
+    widgets.Dropdown(
+        options=["random_seed", "incremental_seed"],
+        value="incremental_seed",
+        disabled=False,
+    ),
+    "seed_type",
+)
+
+set_seed = make_widget(set_seed_input, "set_seed")
+seed_value = make_widget(seed_value_input, "seed_value")
+
+basic_tab = widgets.VBox([text_prompts, steps, height, width, seed_value, seed_type, cuda_device])
 model_tab = widgets.VBox(
     [RN50, RN101, RN50x64, RN50x16, RN50x4, ViTB16, ViTB32, ViTL14, ViTL14_336, use_secondary_model, diffusion_model, diffusion_sampling_mode, randomize_class]
 )
