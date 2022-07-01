@@ -6,6 +6,7 @@ videoFrames
 images_out/*
 configs/*
 !configs/TimeToDisco.yaml
+!configs/dd_gui.yaml
 !configs/README.md
 !images_out/TimeToDisco
 images_out/TimeToDisco/*
