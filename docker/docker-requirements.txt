@@ -31,4 +31,3 @@ git+https://github.com/ahupp/guided-diffusion@packagify
 git+https://github.com/ahupp/ResizeRight@packagify
 git+https://github.com/ahupp/MiDaS@packagify 
 git+https://github.com/pytti-tools/AdaBins@installable 
-git+https://github.com/facebookresearch/pytorch3d.git@stable

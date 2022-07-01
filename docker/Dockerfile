@@ -28,6 +28,7 @@ RUN apt-get update --yes && \
     imagemagick\
     ffmpeg\
     zip\
+    sudo\
     unzip\
     openssh-server &&\
     apt-get clean && rm -rf /var/lib/apt/lists/* && \
@@ -37,7 +38,8 @@ RUN apt-get update --yes && \
 RUN chmod a+rw /workspace
 
 # Create a disco user
-RUN useradd -ms /bin/bash disco
+RUN useradd -ms /bin/bash disco -p disco && adduser disco sudo
+RUN echo "disco ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/disco
 USER disco
 # Run this first since it's slow
 RUN pip install git+https://github.com/facebookresearch/pytorch3d.git@stable
@@ -45,7 +47,6 @@ RUN pip install git+https://github.com/facebookresearch/pytorch3d.git@stable
 USER root
 ARG model_path
 ENV model_path=${model_path}
-RUN chown -R disco ${model_path}
 USER disco
 
 # Install the rest of the pips this way since they aren't slow and can be changed easier
@@ -63,9 +64,11 @@ RUN git clone --single-branch --branch $BRANCH $REPO
 WORKDIR /workspace/disco-diffusion-1
 RUN pip install jupyterlab
 RUN echo 'export PATH="$HOME/.local/bin:$HOME/.local/bin/jupyter-lab:$PATH"' >> ~/.bashrc && echo 'export model_path=\"""${model_path}\"""' >> ~/.bashrc
+RUN echo 'sudo chown -R --silent disco ${model_path}' >> ~/.bashrc
 USER root
 RUN pip install jupyterlab
 RUN echo 'export PATH="$HOME/.local/bin:$HOME/.local/bin/jupyter-lab:$PATH"' >> ~/.bashrc
+RUN chown disco $(echo $model_path | tr -d '"')
 USER disco
 ADD start.sh /start.sh
 ENV TORCH_HOME=${model_path}
