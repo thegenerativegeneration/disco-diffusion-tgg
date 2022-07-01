@@ -50,17 +50,19 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 # print(dd.is_in_notebook())
 
-config_file = open("configs/dd_gui.yaml", "r")
+def display_gui():
+    config_file = open("./configs/dd_gui.yaml", "r")
+    contents = config_file.read()    
+    config_file_input = widgets.Textarea(
+        value=contents,
+        layout={"width": "100%", "height": "500px"},
+    )
 
-config_file_input = widgets.Textarea(
-    value=config_file.read(),
-    disabled=False,
-    layout={"width": "100%", "height": "500px"},
-)
+    display(config_file_input)
+    
+    return config_file_input
 
-display(config_file_input)
-
-def run_dd(out):
+def run_dd(out, config_file_input):
     with out:
         with open("./configs/dd_gui.yaml", "w") as config_file_new:
             config_file_new.write(config_file_input.value)
