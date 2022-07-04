@@ -1,5 +1,4 @@
 #!/bin/bash
-
 echo "Container Started"
 
 cd /workspace/disco-diffusion-1
