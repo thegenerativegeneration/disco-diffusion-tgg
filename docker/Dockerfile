@@ -40,15 +40,10 @@ RUN chmod a+rw /workspace
 # Create a disco user
 RUN useradd -ms /bin/bash disco -p disco && adduser disco sudo
 RUN echo "disco ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/disco
+
 USER disco
 # Run this first since it's slow
 RUN pip install git+https://github.com/facebookresearch/pytorch3d.git@stable
-
-USER root
-ARG model_path
-ENV model_path=${model_path}
-USER disco
-
 # Install the rest of the pips this way since they aren't slow and can be changed easier
 ADD docker-requirements.txt docker-requirements.txt
 RUN pip install -r docker-requirements.txt
@@ -63,14 +58,26 @@ RUN echo 'cat ~/welcome-banner.txt && echo ${DD_VERSION}' >> ~/.bashrc
 RUN git clone --single-branch --branch $BRANCH $REPO
 WORKDIR /workspace/disco-diffusion-1
 RUN pip install jupyterlab
-RUN echo 'export PATH="$HOME/.local/bin:$HOME/.local/bin/jupyter-lab:$PATH"' >> ~/.bashrc && echo 'export model_path=\"""${model_path}\"""' >> ~/.bashrc
-RUN echo 'sudo chown -R --silent disco ${model_path}' >> ~/.bashrc
+
+# model_path based on whether models are predownloaded
+ARG model_path
+ENV TORCH_HOME=${model_path}
+ENV mp=${model_path}
+
+# Disco ENV vars are all string literals for strings becase they are JSON parsed because reasons
+ENV model_path="\""${model_path}"\""
+RUN echo 'export PATH="$HOME/.local/bin:$HOME/.local/bin/jupyter-lab:$PATH"' >> ~/.bashrc
+
+# Install JupyterLab for root but I don't know why anymore.
 USER root
 RUN pip install jupyterlab
 RUN echo 'export PATH="$HOME/.local/bin:$HOME/.local/bin/jupyter-lab:$PATH"' >> ~/.bashrc
+
+# Change ownership of model folder to disco user
+ENV model_path=${model_path}
 RUN chown disco $(echo $model_path | tr -d '"')
+
 USER disco
 ADD start.sh /start.sh
-ENV TORCH_HOME=${model_path}
-RUN mkdir -p ${model_path}/hub/checkpoints/ && cp ${model_path}/vgg16-397923af.pth ${model_path}/hub/checkpoints/vgg16-397923af.pth
+RUN mkdir -p ${mp}/hub/checkpoints/ && cp ${mp}/vgg16-397923af.pth ${mp}/hub/checkpoints/vgg16-397923af.pth || true
 CMD [ "/start.sh" ]

@@ -127,7 +127,7 @@ def bot_loop(args, folders, frame_num, clip_models, init_scale, skip_steps, seco
                 except:
                     symmetry = "no"
                 try:
-                    symmetry_loss_scale = results["details"]["symmetry_loss_scale"]
+                    symmetry_loss_scale = int(results["details"]["symmetry_loss_scale"])
                 except:
                     symmetry_loss_scale = 1500
 
