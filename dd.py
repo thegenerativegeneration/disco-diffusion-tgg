@@ -1174,6 +1174,26 @@ def prepModels(args=None):
                 "use_scale_shift_norm": False,
             }
         )
+    # Credit https://huggingface.co/thegenerativegeneration/ukiyoe-diffusion-256/tree/main
+    if args.diffusion_model == "ukiyoe_diffusion_256":
+        model_config.update(
+            {
+                "attention_resolutions": "16",
+                "class_cond": False,
+                "diffusion_steps": 1000,  # No need to edit this, it is taken care of later.
+                "rescale_timesteps": True,
+                "timestep_respacing": "ddim100",  # No need to edit this, it is taken care of later.
+                "image_size": 256,
+                "learn_sigma": True,
+                "noise_schedule": "linear",
+                "num_channels": 128,
+                "num_heads": 1,
+                "num_res_blocks": 2,
+                "use_checkpoint": args.use_checkpoint,
+                "use_fp16": not args.useCPU,
+                "use_scale_shift_norm": False,
+            }
+        )
     return model_config
 
 

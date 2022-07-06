@@ -115,6 +115,7 @@ def parse(a=None):
             "pixel_art_diffusion_soft_256",
             "256x256_openai_comics_faces_by_alex_spirin_084000",
             "lsun_uncond_100M_1200K_bs128",
+            "ukiyoe_diffusion_256",
             # "vit_b_16_plus_240-laion400m_e31-8fb26589",
         ],
     )

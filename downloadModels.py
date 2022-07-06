@@ -133,6 +133,12 @@ def loadModels(folders=pydot({"model_path": "models"})):
             "hash": "8fb26589b9a8bab2e7a683d280e48df89b8e742f3a82132707282620b36facba",
             "sources": [{"url": "https://github.com/mlfoundations/open_clip/releases/download/v0.2-weights/vit_b_16_plus_240-laion400m_e31-8fb26589.pt"}],
         },
+        {
+            "file": f"{folders.model_path}/ukiyoe_diffusion_256.pt",
+            "hash": "b0b9626fbc6c43ea7eb074134612381a794c5407abb4debc8ba6ccb37386e769",
+            "sources": [{"url": "https://huggingface.co/thegenerativegeneration/ukiyoe-diffusion-256/resolve/main/ukiyoe_diffusion_256.pt"}],
+        },
+
     ]
 
     modelProgress = widgets.IntProgress(
