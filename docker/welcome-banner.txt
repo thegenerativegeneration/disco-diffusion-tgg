@@ -4,6 +4,6 @@
 |  |  | |_ -|  _| . |  |  |  | |  _|  _| | |_ -| | . |   |
 |____/|_|___|___|___|  |____/|_|_| |_| |___|___|_|___|_|_|
                                                           
-Support: https://github.com/entmike/disco-diffusion-1
+Support: https://github.com/thegenerativegeneration/disco-diffusion-tgg
 Discord: https://discord.gg/yNDqCnzCbs
 

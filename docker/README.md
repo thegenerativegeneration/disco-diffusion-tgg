@@ -41,7 +41,7 @@ This example runs Disco Diffusion in a Docker container.  It maps 4 volumes (`im
 docker run --rm -it \
     -v $(echo ~)/disco-diffusion/images_out:/workspace/code/images_out \
     -v $(echo ~)/disco-diffusion/init_images:/workspace/code/init_images \
-    -v $(echo ~)/disco-diffusion/models:/workspace/disco-diffusion-1/models \
+    -v $(echo ~)/disco-diffusion/models:/workspace/disco-diffusion-tgg/models \
     -v $(echo ~)/disco-diffusion/configs:/workspace/disco-diffusion/configs \
     --gpus=all \
     --name="disco-diffusion" --ipc=host \

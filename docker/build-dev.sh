@@ -1,1 +1,1 @@
-docker build -t entmike-disco-diffusion-1:dev --build-arg BRANCH=dev .
+docker build -t thegenerativegeneration-disco-diffusion-tgg:dev --build-arg BRANCH=dev .

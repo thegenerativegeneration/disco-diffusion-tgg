@@ -48,15 +48,15 @@ RUN pip install git+https://github.com/facebookresearch/pytorch3d.git@stable
 ADD docker-requirements.txt docker-requirements.txt
 RUN pip install -r docker-requirements.txt
 
-ENV TORCH_HOME=/workspace/disco-diffusion-1/models
+ENV TORCH_HOME=/workspace/disco-diffusion-tgg/models
 ADD welcome-banner.txt /home/disco/welcome-banner.txt
-ARG REPO=https://github.com/entmike/disco-diffusion-1.git
+ARG REPO=https://github.com/thegenerativegeneration/disco-diffusion-tgg.git
 ARG BRANCH=main
 ARG DD_VERSION=2.3.3
 ENV DD_VERSION=${DD_VERSION}
 RUN echo 'cat ~/welcome-banner.txt && echo ${DD_VERSION}' >> ~/.bashrc 
 RUN git clone --single-branch --branch $BRANCH $REPO
-WORKDIR /workspace/disco-diffusion-1
+WORKDIR /workspace/disco-diffusion-tgg
 RUN pip install jupyterlab
 
 # model_path based on whether models are predownloaded

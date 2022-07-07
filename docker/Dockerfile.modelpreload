@@ -6,7 +6,7 @@ RUN apt-get update && apt-get upgrade --yes && apt install --yes --no-install-re
     echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
 
 RUN pip install wget loguru pydotted ipywidgets && \
-    wget https://raw.githubusercontent.com/entmike/disco-diffusion-1/main/downloadModels.py && \
+    wget https://raw.githubusercontent.com/thegenerativegeneration/disco-diffusion-tgg/main/downloadModels.py && \
     mkdir models && \
     python downloadModels.py && \
     mv models /models
