@@ -134,14 +134,14 @@ def loadModels(folders=pydot({"model_path": "models"})):
             "sources": [{"url": "https://github.com/mlfoundations/open_clip/releases/download/v0.2-weights/vit_b_16_plus_240-laion400m_e31-8fb26589.pt"}],
         },
         {
-            "file": f"{folders.model_path}/ukiyoe_diffusion_256_ema_0.9999_022000.pt",
+            "file": f"{folders.model_path}/ukiyoe_diffusion_256_022000.pt",
             "hash": "b0b9626fbc6c43ea7eb074134612381a794c5407abb4debc8ba6ccb37386e769",
-            "sources": [{"url": "https://huggingface.co/thegenerativegeneration/ukiyoe-diffusion-256/resolve/main/ukiyoe_diffusion_256_ema_0.9999_022000.pt"}],
+            "sources": [{"url": "https://huggingface.co/thegenerativegeneration/ukiyoe-diffusion-256/resolve/main/ukiyoe_diffusion_256_022000.pt"}],
         },
         {
-            "file": f"{folders.model_path}/ukiyoe_diffusion_256_ema_0.9999_010000.pt",
+            "file": f"{folders.model_path}/ukiyoe_diffusion_256_010000.pt",
             "hash": "8287bd1cb50f0024164d18718f11e9dfa11090c5fe3e1a7c3b0dc60812f2abf0",
-            "sources": [{"url": "https://huggingface.co/thegenerativegeneration/ukiyoe-diffusion-256/resolve/main/ukiyoe_diffusion_256_ema_0.9999_010000.pt"}],
+            "sources": [{"url": "https://huggingface.co/thegenerativegeneration/ukiyoe-diffusion-256/resolve/main/ukiyoe_diffusion_256_010000.pt"}],
         },
 
     ]
