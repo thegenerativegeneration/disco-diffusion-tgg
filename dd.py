@@ -1484,16 +1484,6 @@ def do_run(args=None, device=None, is_colab=False, batchNum=None, folders=None):
 
 
 def disco(args, folders, frame_num, clip_models, init_scale, skip_steps, secondary_model, lpips_model, midas_model, midas_transform, device):
-
-    letsgobig = args.go_big
-    gobig_horizontal = False
-    gobig_vertical = False
-
-    if gobig_orientation == "horizontal": # default is vertical, if the settings file says otherwise, change it
-        gobig_horizontal = True
-    else:
-        gobig_vertical = True
-
     # Get corrected sizes
     args.side_x = (args.width_height[0] // 64) * 64
     args.side_y = (args.width_height[1] // 64) * 64

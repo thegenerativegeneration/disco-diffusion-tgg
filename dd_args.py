@@ -205,7 +205,6 @@ def parse(a=None):
     parser.add_argument("--dd_bot", help="Enable DD Discord Bot mode", type=str2bool, default=gp("dd_bot", False), required=False)
     parser.add_argument("--dd_bot_url", help="DD Discord Bot URL", default=gp("dd_bot_url", "http://your-bot.com:5000/"), required=False)
     parser.add_argument("--dd_bot_agentname", help="DD Discord Bot Agent Name", default=gp("dd_bot_agentname", "james-bond"), required=False)
-    parser.add_argument("--go_big", help="Go big mode", type=str2bool, defaul=gp("go_big", False), required=False)
     parser.add_argument(
         "--gen_config",
         help="Generate initial configurations",
