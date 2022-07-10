@@ -15,7 +15,7 @@
   (spot instances are cheap, but interruptable | on-demand instances are more expensive but non-interruptible)
 9. A modal popup will appear, click **My Pods**
 10. Click **Connect** and then click **Connect To Jupyter**
-11. You are now in Jupyter Notebook within the RunPod Docker Container `entmike/disco-diffusion-1`!  Things may look familiar to you.
+11. You are now in Jupyter Notebook within the RunPod Docker Container `thegenerativegeneration/disco-diffusion-tgg`!  Things may look familiar to you.
 12. In JupyterLab, Click **Terminal**
 13. Do a test run with `python disco.py`
 14. Look at your pretty images in `images_out` start to develop.

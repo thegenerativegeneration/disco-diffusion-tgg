@@ -11,7 +11,7 @@ docker run --rm -it \
     --gpus device=all --cpus=2.0 --name="unittest-disco" --ipc=host --user $(id -u):$(id -g) \
     -v /home/mike/ai/disco5/images_out:/workspace/code/images_out \
     -v /home/mike/ai/disco5/init_images:/workspace/code/init_images \
-    -v /home/mike/disco-diffusion-1/examples/configs:/workspace/code/configs \
-    -v /home/mike/disco-diffusion-1:/workspace/scratch \
+    -v /home/mike/disco-diffusion-tgg/examples/configs:/workspace/code/configs \
+    -v /home/mike/disco-diffusion-tgg:/workspace/scratch \
     disco-diffusion:dev bash -c "cp -r /workspace/scratch/* /workspace/code/disco-diffusion-1/ && \
     python disco-diffusion-1/disco.py --config_file=configs/lighthouse.yml"

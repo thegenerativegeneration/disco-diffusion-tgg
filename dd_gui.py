@@ -68,7 +68,7 @@ def run_dd(out, config_file_input):
             config_file_new.write(config_file_input.value)
         
         pargs = dd_args.arg_configuration_loader({
-            "config_file":'/workspace/disco-diffusion-1/configs/dd_gui.yaml'
+            "config_file":'/workspace/disco-diffusion-tgg/configs/dd_gui.yaml'
         })
         
         # Setup folders

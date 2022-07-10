@@ -12,5 +12,5 @@ docker run --rm -it \
     -v /home/mike/ai/images_out:/workspace/code/images_out \
     -v /home/mike/ai/init_images:/workspace/code/init_images \
     -v /home/mike/ai/configs:/workspace/code/configs \
-    -v /home/mike/disco-diffusion-1:/workspace/dev \
+    -v /home/mike/disco-diffusion-tgg:/workspace/dev \
     disco-diffusion:dev /bin/bash

@@ -115,7 +115,8 @@ def parse(a=None):
             "pixel_art_diffusion_soft_256",
             "256x256_openai_comics_faces_by_alex_spirin_084000",
             "lsun_uncond_100M_1200K_bs128",
-            "ukiyoe_diffusion_256",
+            "ukiyoe_diffusion_256_010000",
+            "ukiyoe_diffusion_256_022000",
             # "vit_b_16_plus_240-laion400m_e31-8fb26589",
         ],
     )
@@ -204,6 +205,7 @@ def parse(a=None):
     parser.add_argument("--dd_bot", help="Enable DD Discord Bot mode", type=str2bool, default=gp("dd_bot", False), required=False)
     parser.add_argument("--dd_bot_url", help="DD Discord Bot URL", default=gp("dd_bot_url", "http://your-bot.com:5000/"), required=False)
     parser.add_argument("--dd_bot_agentname", help="DD Discord Bot Agent Name", default=gp("dd_bot_agentname", "james-bond"), required=False)
+    parser.add_argument("--go_big", help="Go big mode", type=str2bool, defaul=gp("go_big", False), required=False)
     parser.add_argument(
         "--gen_config",
         help="Generate initial configurations",
