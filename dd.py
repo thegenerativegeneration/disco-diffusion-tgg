@@ -2063,7 +2063,8 @@ def createVideo(args):
         "yuv420p",
         "-crf",
         "17",
-        "-preset" "veryslow",
+        "-preset",
+        "veryslow",
         filepath,
     ]
     try:
